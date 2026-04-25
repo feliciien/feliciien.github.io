@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BotIQ Trade — Automated Intelligence. Real Returns.</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --gold-dim: #8A6F32;
+    --black: #080808;
+    --dark: #0D0D0D;
+    --dark2: #131313;
+    --dark3: #1A1A1A;
+    --white: #F5F0E8;
+    --white-dim: #9A9488;
+    --accent: #C9A84C;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    width: 32px; height: 32px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.15s ease;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Language switcher */
+  .lang-switch {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 100;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .lang-btn {
+    background: none;
+    border: 1px solid var(--gold-dim);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 0.3rem 0.7rem;
+    cursor: none;
+    transition: all 0.3s ease;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: 2rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.95), transparent);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    position: relative;
+  }
+
+  .logo-mark svg { width: 100%; height: 100%; }
+
+  .logo-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .logo-text span { color: var(--gold); }
+
+  .nav-links {
+    display: flex;
+    gap: 3rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 0 4rem;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+  }
+
+  .hero-orb {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    top: 50%; right: 10%;
+    transform: translateY(-50%);
+    animation: pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.8; }
+    50% { transform: translateY(-50%) scale(1.1); opacity: 1; }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+  }
+
+  .hero-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.3s;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 7vw, 6rem);
+    font-weight: 300;
+    line-height: 1.05;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.5s;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 1rem;
+    color: var(--white-dim);
+    line-height: 1.8;
+    max-width: 480px;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.7s;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.9s;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 1rem 2.5rem;
+    border: none;
+    cursor: none;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--gold); }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--dark2);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    padding: 2rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    border-right: 1px solid rgba(201,168,76,0.1);
+  }
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 8rem 4rem;
+    position: relative;
+  }
+
+  .section-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .section-tag::before {
+    content: '';
+    width: 30px; height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  /* ABOUT */
+  #about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    background: var(--dark2);
+  }
+
+  .about-text p {
+    color: var(--white-dim);
+    line-height: 1.9;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .about-highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .highlight-item {
+    border-left: 2px solid var(--gold);
+    padding-left: 1.5rem;
+  }
+
+  .highlight-item h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .highlight-item p {
+    font-size: 0.85rem;
+    color: var(--white-dim);
+  }
+
+  /* PERFORMANCE */
+  #performance { background: var(--black); }
+
+  .perf-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 4rem;
+    background: rgba(201,168,76,0.1);
+  }
+
+  .perf-card {
+    background: var(--dark2);
+    padding: 3rem 2.5rem;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .perf-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0);
+    transition: transform 0.5s ease;
+  }
+  .perf-card:hover::before { transform: scaleX(1); }
+  .perf-card:hover { background: var(--dark3); }
+
+  .perf-icon {
+    width: 40px; height: 40px;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+  }
+
+  .perf-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 600;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .perf-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    margin-bottom: 1rem;
+  }
+
+  .perf-desc {
+    font-size: 0.85rem;
+    color: var(--white-dim);
+    line-height: 1.7;
+  }
+
+  /* EAs SECTION */
+  #eas { background: var(--dark2); }
+
+  .ea-list {
+    margin-top: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ea-item {
+    background: var(--dark3);
+    padding: 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2rem;
+    border-left: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: none;
+  }
+  .ea-item:hover {
+    border-left-color: var(--gold);
+    background: rgba(201,168,76,0.03);
+    padding-left: 3rem;
+  }
+
+  .ea-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .ea-desc {
+    font-size: 0.85rem;
+    color: var(--white-dim);
+  }
+
+  .ea-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  /* FOUNDER */
+  #founder {
+    background: var(--black);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+  }
+
+  .founder-visual {
+    position: relative;
+  }
+
+  .founder-card {
+    background: var(--dark2);
+    border: 1px solid rgba(201,168,76,0.15);
+    padding: 3rem;
+    position: relative;
+  }
+  .founder-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 2rem; right: 2rem;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .founder-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .founder-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+  }
+
+  .founder-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.8rem;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--gold-dim);
+  }
+
+  .founder-text p {
+    color: var(--white-dim);
+    line-height: 1.9;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .social-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 0.6rem 1.2rem;
+    transition: all 0.3s ease;
+  }
+  .social-link:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* CONTACT */
+  #contact {
+    background: var(--dark2);
+    text-align: center;
+  }
+
+  .contact-inner {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .contact-inner p {
+    color: var(--white-dim);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    font-size: 0.95rem;
+  }
+
+  .contact-email {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 3rem;
+    transition: color 0.3s;
+  }
+  .contact-email:hover { color: var(--gold-light); }
+
+  /* FOOTER */
+  footer {
+    background: var(--black);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    padding: 3rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-copy {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--white-dim);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .footer-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* TICKER */
+  .ticker {
+    background: rgba(201,168,76,0.05);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    padding: 0.8rem 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-inner {
+    display: flex;
+    gap: 4rem;
+    animation: ticker 20s linear infinite;
+    white-space: nowrap;
+  }
+
+  .ticker-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--white-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ticker-item span {
+    color: var(--gold);
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    nav { padding: 1.5rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 5rem 1.5rem; }
+    #hero { padding: 0 1.5rem; }
+    .hero-title { font-size: 2.8rem; }
+    #about, #founder { grid-template-columns: 1fr; gap: 3rem; }
+    .perf-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 2rem 1.5rem; }
+    .stat-item:nth-child(2) { border-right: none; }
+    footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+    .lang-switch { top: 1.5rem; right: 1.5rem; }
+  }
+
+  /* Hidden language content */
+  .fr { display: none; }
+  .en { display: block; }
+  body.lang-fr .fr { display: block; }
+  body.lang-fr .en { display: none; }
+  body.lang-en .fr { display: none; }
+  body.lang-en .en { display: block; }
+
+  /* For inline elements */
+  span.fr, a.fr { display: none; }
+  body.lang-fr span.fr, body.lang-fr a.fr { display: inline; }
+  body.lang-fr span.en, body.lang-fr a.en { display: none; }
+</style>
+</head>
+<body class="lang-en">
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Language Switch -->
+<div class="lang-switch">
+  <button class="lang-btn active" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('fr')">FR</button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" style="cursor:none;" onclick="window.open('https://www.linkedin.com/company/botiq-trade/?viewAsMember=true','_blank')">
+    <div class="logo-mark">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,2 38,12 38,28 20,38 2,28 2,12" stroke="#C9A84C" stroke-width="1.5" fill="none"/>
+        <polygon points="20,8 32,15 32,25 20,32 8,25 8,15" stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.5"/>
+        <circle cx="20" cy="20" r="4" fill="#C9A84C"/>
+        <line x1="20" y1="8" x2="20" y2="14" stroke="#C9A84C" stroke-width="1"/>
+        <line x1="20" y1="26" x2="20" y2="32" stroke="#C9A84C" stroke-width="1"/>
+        <line x1="8" y1="15" x2="13" y2="17.5" stroke="#C9A84C" stroke-width="1"/>
+        <line x1="27" y1="22.5" x2="32" y2="25" stroke="#C9A84C" stroke-width="1"/>
+        <line x1="8" y1="25" x2="13" y2="22.5" stroke="#C9A84C" stroke-width="1"/>
+        <line x1="27" y1="17.5" x2="32" y2="15" stroke="#C9A84C" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="logo-text">BotIQ <span>Trade</span></div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#about"><span class="en">About</span><span class="fr">À propos</span></a></li>
+    <li><a href="#performance"><span class="en">Performance</span><span class="fr">Performance</span></a></li>
+    <li><a href="#eas"><span class="en">Systems</span><span class="fr">Systèmes</span></a></li>
+    <li><a href="#founder"><span class="en">Founder</span><span class="fr">Fondateur</span></a></li>
+    <li><a href="#contact"><span class="en">Contact</span><span class="fr">Contact</span></a></li>
+  </ul>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker" style="position:fixed;top:0;z-index:40;width:100%;margin-top:0;padding-top:0.5rem;padding-bottom:0.5rem;background:rgba(8,8,8,0.9);border-bottom:1px solid rgba(201,168,76,0.1);">
+  <div class="ticker-inner">
+    <div class="ticker-item">XAUUSD <span>▲ +2.34%</span></div>
+    <div class="ticker-item">XAGUSD <span>▲ +1.12%</span></div>
+    <div class="ticker-item">BTCUSD <span>▲ +3.47%</span></div>
+    <div class="ticker-item">FTMO <span>Verified ✓</span></div>
+    <div class="ticker-item">5Y Backtest <span>+100%</span></div>
+    <div class="ticker-item">Max DD <span>10%</span></div>
+    <div class="ticker-item">Win Rate <span>65%+</span></div>
+    <div class="ticker-item">XAUUSD <span>▲ +2.34%</span></div>
+    <div class="ticker-item">XAGUSD <span>▲ +1.12%</span></div>
+    <div class="ticker-item">BTCUSD <span>▲ +3.47%</span></div>
+    <div class="ticker-item">FTMO <span>Verified ✓</span></div>
+    <div class="ticker-item">5Y Backtest <span>+100%</span></div>
+    <div class="ticker-item">Max DD <span>10%</span></div>
+    <div class="ticker-item">Win Rate <span>65%+</span></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="hero" style="padding-top:5rem;">
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span class="en">Quantitative Trading</span>
+      <span class="fr">Trading Quantitatif</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="en">Automated <em>Intelligence.</em><br>Real Returns.</span>
+      <span class="fr">Intelligence <em>Automatisée.</em><br>Résultats Réels.</span>
+    </h1>
+    <p class="hero-sub">
+      <span class="en">BotIQ Trade builds algorithmic trading systems that perform where it counts — in live markets, under real prop firm conditions.</span>
+      <span class="fr">BotIQ Trade conçoit des systèmes de trading algorithmique qui performent là où ça compte — sur les marchés réels, dans des conditions prop firm réelles.</span>
+    </p>
+    <div class="hero-cta">
+      <a href="#performance" class="btn-primary">
+        <span class="en">View Performance</span>
+        <span class="fr">Voir les Performances</span>
+      </a>
+      <a href="#contact" class="btn-ghost">
+        <span class="en">Get in touch →</span>
+        <span class="fr">Nous contacter →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-num">$8K+</span>
+    <span class="stat-label">
+      <span class="en">Verified Payouts</span>
+      <span class="fr">Payouts Vérifiés</span>
+    </span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">100%</span>
+    <span class="stat-label">
+      <span class="en">5-Year Backtest</span>
+      <span class="fr">Backtest 5 Ans</span>
+    </span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">65%+</span>
+    <span class="stat-label">
+      <span class="en">Live Win Rate</span>
+      <span class="fr">Win Rate en Live</span>
+    </span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">≤10%</span>
+    <span class="stat-label">
+      <span class="en">Max Drawdown</span>
+      <span class="fr">Drawdown Maximum</span>
+    </span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-text">
+    <div class="section-tag">
+      <span class="en">About</span>
+      <span class="fr">À Propos</span>
+    </div>
+    <h2 class="section-title">
+      <span class="en">Where <em>technology</em><br>meets the markets</span>
+      <span class="fr">Là où la <em>technologie</em><br>rencontre les marchés</span>
+    </h2>
+    <p class="en">BotIQ Trade is a quantitative trading firm built on one principle: algorithms don't have emotions. We design, backtest and deploy Expert Advisors on live prop firm accounts — with verified, transparent results.</p>
+    <p class="fr">BotIQ Trade est une société de trading quantitatif construite sur un principe : les algorithmes n'ont pas d'émotions. Nous concevons, backtestons et déployons des Expert Advisors sur des comptes prop firm réels — avec des résultats vérifiés et transparents.</p>
+    <p class="en">Operating on FTMO and Atlas Funded with a public track record, our systems trade Gold, Silver and BTC using ICT/SMC methodology — fully automated, fully accountable.</p>
+    <p class="fr">Opérant sur FTMO et Atlas Funded avec un track record public, nos systèmes tradent l'Or, l'Argent et le BTC en utilisant la méthodologie ICT/SMC — entièrement automatisés, entièrement transparents.</p>
+  </div>
+  <div class="about-highlights">
+    <div class="highlight-item">
+      <h4>
+        <span class="en">Live Verified Results</span>
+        <span class="fr">Résultats Vérifiés en Live</span>
+      </h4>
+      <p>
+        <span class="en">Public FTMO profile. Real payouts. No simulated data.</span>
+        <span class="fr">Profil FTMO public. Vrais payouts. Aucune donnée simulée.</span>
+      </p>
+    </div>
+    <div class="highlight-item">
+      <h4>
+        <span class="en">Open Source Systems</span>
+        <span class="fr">Systèmes Open Source</span>
+      </h4>
+      <p>
+        <span class="en">All EAs documented and published on GitHub for full transparency.</span>
+        <span class="fr">Tous les EAs documentés et publiés sur GitHub pour une transparence totale.</span>
+      </p>
+    </div>
+    <div class="highlight-item">
+      <h4>
+        <span class="en">Institutional Discipline</span>
+        <span class="fr">Discipline Institutionnelle</span>
+      </h4>
+      <p>
+        <span class="en">Strict risk management. Max 10% drawdown. Consistent monthly performance.</span>
+        <span class="fr">Gestion du risque stricte. 10% de drawdown max. Performance mensuelle constante.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- PERFORMANCE -->
+<section id="performance">
+  <div class="section-tag">
+    <span class="en">Performance</span>
+    <span class="fr">Performance</span>
+  </div>
+  <h2 class="section-title">
+    <span class="en">Numbers that <em>speak</em><br>for themselves</span>
+    <span class="fr">Des chiffres qui <em>parlent</em><br>d'eux-mêmes</span>
+  </h2>
+  <div class="perf-grid">
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+      <span class="perf-num">+100%</span>
+      <div class="perf-label">
+        <span class="en">5-Year Backtest Return</span>
+        <span class="fr">Rendement Backtest 5 Ans</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Gold EA — tested from 2021 to 2026 on live market data with realistic spreads and commissions.</span>
+        <span class="fr">EA Gold — testé de 2021 à 2026 sur des données de marché réelles avec des spreads et commissions réalistes.</span>
+      </p>
+    </div>
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span class="perf-num">≤10%</span>
+      <div class="perf-label">
+        <span class="en">Maximum Drawdown</span>
+        <span class="fr">Drawdown Maximum</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Fully compatible with FTMO's 10% max drawdown rule. Capital protection is non-negotiable.</span>
+        <span class="fr">Entièrement compatible avec la règle FTMO de 10% de drawdown maximum. La protection du capital est non-négociable.</span>
+      </p>
+    </div>
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span class="perf-num">$8K+</span>
+      <div class="perf-label">
+        <span class="en">Total Verified Payouts</span>
+        <span class="fr">Payouts Vérifiés Totaux</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Real money withdrawn from FTMO prop firm accounts. Verifiable on our public trader profile.</span>
+        <span class="fr">Argent réel retiré des comptes prop firm FTMO. Vérifiable sur notre profil trader public.</span>
+      </p>
+    </div>
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span class="perf-num">65%+</span>
+      <div class="perf-label">
+        <span class="en">Live Win Rate</span>
+        <span class="fr">Win Rate en Live</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Consistent win rate across manual and automated trades on live funded accounts.</span>
+        <span class="fr">Win rate constant sur les trades manuels et automatisés sur les comptes fundés en live.</span>
+      </p>
+    </div>
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <span class="perf-num">2+</span>
+      <div class="perf-label">
+        <span class="en">Active Prop Firm Accounts</span>
+        <span class="fr">Comptes Prop Firm Actifs</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Simultaneously managing FTMO 100K and Atlas Funded accounts with zero breaches.</span>
+        <span class="fr">Gestion simultanée de comptes FTMO 100K et Atlas Funded avec zéro breach.</span>
+      </p>
+    </div>
+    <div class="perf-card">
+      <svg class="perf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      <span class="perf-num">5Y</span>
+      <div class="perf-label">
+        <span class="en">Proven Track Record</span>
+        <span class="fr">Track Record Prouvé</span>
+      </div>
+      <p class="perf-desc">
+        <span class="en">Systems validated across 5 years of market data including bull runs, corrections, and high volatility periods.</span>
+        <span class="fr">Systèmes validés sur 5 ans de données de marché incluant les rallyes, corrections et périodes de haute volatilité.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- EAs -->
+<section id="eas">
+  <div class="section-tag">
+    <span class="en">Trading Systems</span>
+    <span class="fr">Systèmes de Trading</span>
+  </div>
+  <h2 class="section-title">
+    <span class="en">Our <em>algorithmic</em><br>arsenal</span>
+    <span class="fr">Notre arsenal <em>algorithmique</em></span>
+  </h2>
+  <div class="ea-list">
+    <div class="ea-item">
+      <div>
+        <div class="ea-name">Gold ICT EA</div>
+        <div class="ea-desc">
+          <span class="en">ICT/SMC methodology on XAUUSD. Detects order blocks, fair value gaps and market structure shifts in real-time.</span>
+          <span class="fr">Méthodologie ICT/SMC sur XAUUSD. Détecte les order blocks, fair value gaps et changements de structure de marché en temps réel.</span>
+        </div>
+      </div>
+      <div class="ea-badge">
+        <span class="en">Live ✓</span>
+        <span class="fr">Live ✓</span>
+      </div>
+    </div>
+    <div class="ea-item">
+      <div>
+        <div class="ea-name">Asian Range Breakout EA</div>
+        <div class="ea-desc">
+          <span class="en">Targets daily 1% profit by trading breakouts of the Asian session range on Gold.</span>
+          <span class="fr">Cible 1% de profit quotidien en tradant les breakouts de la range asiatique sur l'Or.</span>
+        </div>
+      </div>
+      <div class="ea-badge">
+        <span class="en">Live ✓</span>
+        <span class="fr">Live ✓</span>
+      </div>
+    </div>
+    <div class="ea-item">
+      <div>
+        <div class="ea-name">BTC FTMO EA</div>
+        <div class="ea-desc">
+          <span class="en">Optimized for Bitcoin with precision entries on high-probability sessions. FTMO-compliant risk management built in.</span>
+          <span class="fr">Optimisé pour le Bitcoin avec des entrées précises sur les sessions à haute probabilité. Gestion du risque conforme FTMO intégrée.</span>
+        </div>
+      </div>
+      <div class="ea-badge">
+        <span class="en">Live ✓</span>
+        <span class="fr">Live ✓</span>
+      </div>
+    </div>
+    <div class="ea-item">
+      <div>
+        <div class="ea-name">FTMO Risk Manager</div>
+        <div class="ea-desc">
+          <span class="en">4-level state machine (Safe / Warning / Pre-Danger / Hard Limit) that monitors and protects all accounts automatically.</span>
+          <span class="fr">Machine à états à 4 niveaux (Safe / Warning / Pre-Danger / Hard Limit) qui surveille et protège tous les comptes automatiquement.</span>
+        </div>
+      </div>
+      <div class="ea-badge">
+        <span class="en">Open Source</span>
+        <span class="fr">Open Source</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOUNDER -->
+<section id="founder">
+  <div class="founder-visual">
+    <div class="founder-card">
+      <div class="founder-name">Félicien Diouf</div>
+      <div class="founder-title">
+        <span class="en">Founder & Head of Algorithmic Trading</span>
+        <span class="fr">Fondateur & Responsable du Trading Algorithmique</span>
+      </div>
+      <p style="color:var(--white-dim);font-size:0.85rem;line-height:1.8;">
+        <span class="en">"Markets are complex systems. The edge comes from building systems smarter than emotion."</span>
+        <span class="fr">"Les marchés sont des systèmes complexes. L'edge vient de la construction de systèmes plus intelligents que l'émotion."</span>
+      </p>
+      <div class="founder-tags">
+        <span class="tag">MQL5 Developer</span>
+        <span class="tag">ICT / SMC</span>
+        <span class="tag">FTMO Verified</span>
+        <span class="tag">Dakar, Senegal</span>
+        <span class="tag">BotIQ Trade</span>
+        <span class="tag">Workfusion</span>
+      </div>
+    </div>
+  </div>
+  <div class="founder-text">
+    <div class="section-tag">
+      <span class="en">Founder</span>
+      <span class="fr">Fondateur</span>
+    </div>
+    <h2 class="section-title">
+      <span class="en">Built by a trader,<br>for the <em>markets</em></span>
+      <span class="fr">Construit par un trader,<br>pour les <em>marchés</em></span>
+    </h2>
+    <p class="en">Félicien Diouf is a quantitative trader and algorithmic developer based in Dakar, Senegal. With years of experience in prop firm trading, he has built and deployed multiple Expert Advisors across Gold, Silver and BTC — all with verified live results.</p>
+    <p class="fr">Félicien Diouf est un trader quantitatif et développeur algorithmique basé à Dakar, Sénégal. Avec des années d'expérience dans le trading prop firm, il a construit et déployé plusieurs Expert Advisors sur l'Or, l'Argent et le BTC — tous avec des résultats live vérifiés.</p>
+    <p class="en">His approach combines ICT/SMC market structure analysis with rigorous algorithmic execution — removing emotion and maximizing edge.</p>
+    <p class="fr">Son approche combine l'analyse de structure de marché ICT/SMC avec une exécution algorithmique rigoureuse — éliminant l'émotion et maximisant l'edge.</p>
+    <div class="social-links">
+      <a href="https://www.linkedin.com/in/felicien-diouf-68b998216/" target="_blank" class="social-link">LinkedIn</a>
+      <a href="https://github.com/feliciien" target="_blank" class="social-link">GitHub</a>
+      <a href="https://profile.ftmo.com/user/BB6PRNGK8F" target="_blank" class="social-link">
+        <span class="en">FTMO Profile</span>
+        <span class="fr">Profil FTMO</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="section-tag" style="justify-content:center;">
+      <span class="en">Contact</span>
+      <span class="fr">Contact</span>
+    </div>
+    <h2 class="section-title">
+      <span class="en">Ready to invest in<br><em>real algorithms?</em></span>
+      <span class="fr">Prêt à investir dans<br>de <em>vrais algorithmes?</em></span>
+    </h2>
+    <p class="en">Whether you're an investor looking for algorithmic exposure or a trader interested in our systems — let's talk.</p>
+    <p class="fr">Que vous soyez un investisseur cherchant une exposition algorithmique ou un trader intéressé par nos systèmes — parlons-en.</p>
+    <a href="mailto:contact@botiqtrade.com" class="contact-email">contact@botiqtrade.com</a>
+    <a href="mailto:contact@botiqtrade.com" class="btn-primary">
+      <span class="en">Send a message</span>
+      <span class="fr">Envoyer un message</span>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-copy">© 2026 BotIQ Trade. <span class="en">All rights reserved.</span><span class="fr">Tous droits réservés.</span></div>
+  <div class="footer-links">
+    <a href="#about"><span class="en">About</span><span class="fr">À propos</span></a>
+    <a href="#performance">Performance</a>
+    <a href="#eas"><span class="en">Systems</span><span class="fr">Systèmes</span></a>
+    <a href="https://www.linkedin.com/company/botiq-trade/?viewAsMember=true" target="_blank">BotIQ LinkedIn</a>
+    <a href="#contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 4 + 'px';
+    cursor.style.top = e.clientY - 4 + 'px';
+    ring.style.left = e.clientX - 16 + 'px';
+    ring.style.top = e.clientY - 16 + 'px';
+  });
+
+  // Language switch
+  function setLang(lang) {
+    document.body.className = 'lang-' + lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent === lang.toUpperCase());
+    });
+  }
+
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.perf-card, .ea-item, .highlight-item, .stat-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+  });
+
+  // Animate numbers
+  function animateNum(el, target, suffix = '') {
+    let start = 0;
+    const duration = 2000;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      el.textContent = Math.floor(progress * target) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+</script>
+</body>
+</html>
