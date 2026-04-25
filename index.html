@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>BotIQ Trade — Algorithmic Trading Desk</title>
+<title>BotIQ Trade — Systematic Trading Desk</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -16,36 +15,29 @@ body {
     background:#0a0a0a;
     color:#fff;
 }
-
 .container {
     max-width:1100px;
     margin:auto;
     padding:60px 20px;
 }
-
 h1,h2,h3 {
     font-weight:400;
 }
-
 .gold { color:#C9A84C; }
-
 .section {
     margin-bottom:80px;
 }
-
 .card {
     background:#111;
     padding:25px;
     margin-bottom:20px;
     border-left:3px solid #C9A84C;
 }
-
 .stats {
     display:flex;
     gap:20px;
     flex-wrap:wrap;
 }
-
 .stat {
     background:#111;
     padding:20px;
@@ -53,11 +45,9 @@ h1,h2,h3 {
     min-width:200px;
     text-align:center;
 }
-
 .stat h2 {
     color:#C9A84C;
 }
-
 a.button {
     display:inline-block;
     padding:12px 25px;
@@ -66,26 +56,14 @@ a.button {
     text-decoration:none;
     margin-top:15px;
 }
-
-input {
-    padding:12px;
-    width:70%;
-    background:#111;
-    border:1px solid #333;
-    color:#fff;
-}
-
-button {
-    padding:12px;
-    background:#C9A84C;
-    border:none;
-    cursor:pointer;
-}
-
 img {
     width:100%;
     margin-top:20px;
     border:1px solid #222;
+}
+.small {
+    font-size:12px;
+    color:#777;
 }
 </style>
 
@@ -100,11 +78,15 @@ img {
 <div class="section">
 <h1>
 BotIQ Trade<br>
-<span class="gold">Algorithmic Trading Desk</span>
+<span class="gold">Systematic Trading Desk</span>
 </h1>
 
 <p>
-Systematic trading strategies deployed with strict risk management and disciplined execution.
+Short-term systematic strategies focused on intraday volatility and liquidity imbalances.
+</p>
+
+<p>
+Designed to generate uncorrelated, risk-managed returns with strict capital control.
 </p>
 
 <a href="#proof" class="button">View Track Record</a>
@@ -129,7 +111,7 @@ Our approach prioritizes capital preservation, disciplined execution, and risk-a
 </p>
 </div>
 
-<!-- CAPITAL ALLOCATION -->
+<!-- CAPITAL -->
 
 <div class="section">
 <h2>Capital Allocation</h2>
@@ -142,21 +124,27 @@ We work with a limited number of partners looking to allocate capital into syste
 The model is performance-based — we only get paid when results are generated.
 </p>
 
+<p>
+Currently onboarding a limited number of capital partners before scaling.
+</p>
+
 <a href="mailto:feliciien@gmail.com" class="button">
 Request Allocation Access
 </a>
 </div>
 
-<!-- PERFORMANCE -->
+<!-- TRACK RECORD -->
 
 <div class="section">
-<h2>Performance Metrics</h2>
+<h2>Track Record (Composite)</h2>
+
+<p>Live since December 2025 (~5 months)</p>
 
 <div class="stats">
 
 <div class="stat">
 <h2>+10%</h2>
-<p>Return (7 days)</p>
+<p>Total Return</p>
 </div>
 
 <div class="stat">
@@ -170,7 +158,7 @@ Request Allocation Access
 </div>
 
 <div class="stat">
-<h2>1:3.48</h2>
+<h2>1:3.4</h2>
 <p>Risk / Reward</p>
 </div>
 
@@ -185,28 +173,51 @@ Request Allocation Access
 </div>
 
 </div>
-</div>
-
-<!-- PROOF -->
-
-<div id="proof" class="section">
-<h2>Verified Track Record</h2>
 
 <p>
-<a href="https://trader.ftmo.com/certificates/share/02786acf74cd34d2f377" target="_blank">
-Verify FTMO Certificate →
-</a>
+Performance aggregated across multiple funded accounts (FTMO).  
+All results are based on live trading conditions.
 </p>
-
-<h3>Payout Proof</h3>
-<img src="assets/payout.jpg" alt="payout proof">
-
-<h3>Equity Curve</h3>
-<img src="assets/equity.jpg" alt="equity curve">
 
 </div>
 
-<!-- PROCESS -->
+<!-- RISK -->
+
+<div class="section">
+<h2>Risk Framework</h2>
+
+<div class="card">Risk per trade: 0.5% – 1%</div>
+<div class="card">Expected max drawdown: 8% – 15%</div>
+<div class="card">Hard risk cut (kill-switch): -8%</div>
+<div class="card">Exposure reduced during low-volatility environments</div>
+
+<p>
+The strategy prioritizes capital preservation first, then performance.
+</p>
+
+</div>
+
+<!-- STRATEGY -->
+
+<div class="section">
+<h2>Strategy Logic</h2>
+
+<p>
+The strategy focuses on intraday volatility and liquidity imbalances,
+capturing short-term dislocations during high-activity sessions.
+</p>
+
+<p>
+Execution is reduced during low-conviction environments to preserve capital.
+</p>
+
+<p>
+The edge is derived from timing, execution discipline, and asymmetric risk/reward positioning.
+</p>
+
+</div>
+
+<!-- EXECUTION PROCESS -->
 
 <div class="section">
 <h2>Execution Process</h2>
@@ -231,6 +242,29 @@ Verify FTMO Certificate →
 
 </div>
 
+<!-- PROOF -->
+
+<div id="proof" class="section">
+<h2>Verification</h2>
+
+<p>
+<a href="https://trader.ftmo.com/certificates/share/02786acf74cd34d2f377" target="_blank">
+Verify FTMO Certificate →
+</a>
+</p>
+
+<h3>Payout Proof</h3>
+<img src="assets/payout.jpg" alt="payout proof">
+
+<h3>Equity Curve</h3>
+<img src="assets/equity.jpg" alt="equity curve">
+
+<p class="small">
+Backtesting is used for robustness validation only and is not representative of live performance.
+</p>
+
+</div>
+
 <!-- FOUNDER -->
 
 <div class="section">
@@ -248,12 +282,12 @@ Operating systematic strategies with verified performance and disciplined risk m
 
 <!-- DISCLAIMER -->
 
-<div class="section">
-<p style="font-size:12px;color:#777;">
+<div class="section small">
+<p>
 BotIQ Trade does not manage client funds directly. Investors retain full control of their accounts at all times.
 </p>
 
-<p style="font-size:12px;color:#777;">
+<p>
 Trading involves risk. Past performance is not indicative of future results.
 </p>
 </div>
