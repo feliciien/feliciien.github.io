@@ -3,1596 +3,1877 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BotIQ Capital — Systematic Intraday Trading</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+<title>BotIQ Capital — Systematic Intraday Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --gold: #B8965A;
-    --gold-light: #D4B07A;
-    --gold-dim: rgba(184,150,90,0.12);
-    --off-white: #F5F2EC;
-    --warm-white: #FAF8F4;
-    --ink: #0A0908;
-    --ink-2: #111009;
-    --ink-3: #1A1814;
-    --muted: #5C5850;
-    --muted-2: #7A7268;
-    --line: rgba(184,150,90,0.16);
-    --green: #5A8F6A;
-    --red: #8F5A5A;
-    --font-serif: 'Cormorant Garamond', Georgia, serif;
-    --font-sans: 'Syne', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-  }
+:root {
+  --bg:       #0C0B09;
+  --bg-2:     #111008;
+  --bg-3:     #161410;
+  --bg-4:     #1C1A15;
+  --ink:      #F0EDE6;
+  --ink-2:    #C8C4BC;
+  --ink-3:    #908C84;
+  --ink-4:    #5C5850;
+  --gold:     #C4A35A;
+  --gold-dim: rgba(196,163,90,0.12);
+  --gold-line:rgba(196,163,90,0.18);
+  --green:    #6A9474;
+  --red:      #9A5A5A;
+  --line:     rgba(196,163,90,0.14);
+  --line-sub: rgba(240,237,230,0.06);
+  --ff-serif: 'EB Garamond', 'Libre Baskerville', Georgia, serif;
+  --ff-mono:  'IBM Plex Mono', monospace;
+}
 
-  html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; font-size: 15px; }
 
-  body {
-    font-family: var(--font-sans);
-    background: var(--ink);
-    color: var(--off-white);
-    overflow-x: hidden;
-    line-height: 1.6;
-    font-size: 15px;
-  }
+body {
+  font-family: var(--ff-mono);
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* ── UTILITY ── */
-  .fade-up {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .fade-up.visible { opacity: 1; transform: translateY(0); }
+/* ═══════════════════════════════
+   UTILITY
+═══════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.fade-in.visible { opacity: 1; transform: none; }
 
-  /* ── NAV ── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 22px 60px;
-    background: rgba(10,9,8,0.92);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--line);
-  }
-  .nav-logo {
-    font-family: var(--font-serif);
-    font-size: 18px;
-    font-weight: 400;
-    letter-spacing: 0.1em;
-    color: var(--gold);
-    text-decoration: none;
-  }
-  .nav-logo span { color: var(--off-white); opacity: 0.5; margin: 0 6px; }
-  .nav-links { display: flex; gap: 36px; list-style: none; }
-  .nav-links a {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--gold); }
-  .nav-cta {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink);
-    background: var(--gold);
-    padding: 10px 22px;
-    text-decoration: none;
-    transition: background 0.2s;
-  }
-  .nav-cta:hover { background: var(--gold-light); }
+.label {
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 400;
+}
+.rule { width: 100%; height: 1px; background: var(--line); }
+.rule-short { width: 28px; height: 1px; background: var(--gold); opacity: 0.5; }
 
-  /* ── HERO ── */
-  .hero {
-    min-height: 100vh;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    padding: 0 60px 90px;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-bg {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse 55% 55% at 75% 35%, rgba(184,150,90,0.05) 0%, transparent 70%),
-      radial-gradient(ellipse 35% 50% at 15% 75%, rgba(184,150,90,0.03) 0%, transparent 60%);
-  }
-  .hero-grid {
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(184,150,90,0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(184,150,90,0.035) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 100%);
-  }
-  .hero-status {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted-2);
-    margin-bottom: 32px;
-  }
-  .hero-status-dot {
-    width: 6px; height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: blink 2.5s ease-in-out infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* ═══════════════════════════════
+   NAV
+═══════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 64px;
+  height: 64px;
+  background: rgba(12,11,9,0.94);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid var(--line);
+}
+.nav-logo {
+  font-family: var(--ff-serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+.nav-logo-sep { color: var(--gold); margin: 0 8px; font-weight: 300; }
+.nav-links {
+  display: flex; gap: 40px; list-style: none;
+}
+.nav-links a {
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--gold); }
+.nav-cta {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--gold);
+  padding: 10px 24px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
 
-  .hero h1 {
-    font-family: var(--font-serif);
-    font-size: clamp(48px, 6.5vw, 90px);
-    font-weight: 300;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
-    margin-bottom: 28px;
-    max-width: 800px;
-  }
-  .hero h1 em { font-style: italic; color: var(--gold); }
+/* ═══════════════════════════════
+   HERO
+═══════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  padding: 120px 64px 80px;
+  position: relative;
+  overflow: hidden;
+  gap: 80px;
+}
 
-  .hero-sub {
-    font-size: 14px;
-    color: var(--muted-2);
-    max-width: 500px;
-    margin-bottom: 48px;
-    line-height: 1.9;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-  }
-  .hero-actions { display: flex; align-items: center; gap: 28px; margin-bottom: 64px; }
-  .btn-primary {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink);
-    background: var(--gold);
-    padding: 14px 34px;
-    text-decoration: none;
-    transition: background 0.2s;
-    display: inline-block;
-  }
-  .btn-primary:hover { background: var(--gold-light); }
-  .btn-ghost {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted-2);
-    text-decoration: none;
-    border-bottom: 1px solid var(--muted);
-    padding-bottom: 2px;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
+.hero-noise {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.6;
+}
 
-  .hero-stats-row {
-    display: flex; gap: 0;
-    border-top: 1px solid var(--line);
-    border-left: 1px solid var(--line);
-    width: fit-content;
-  }
-  .hero-stat {
-    padding: 20px 36px;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-  .hero-stat-val {
-    font-family: var(--font-serif);
-    font-size: 28px;
-    font-weight: 300;
-    color: var(--gold);
-    display: block;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .hero-stat-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+.hero-grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(196,163,90,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(196,163,90,0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+}
 
-  .hero-scroll {
-    position: absolute; bottom: 36px; right: 60px;
-    writing-mode: vertical-rl;
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    display: flex; align-items: center; gap: 14px;
-  }
-  .hero-scroll::after {
-    content: '';
-    width: 1px; height: 56px;
-    background: linear-gradient(to bottom, var(--gold), transparent);
-  }
+.hero-left { position: relative; z-index: 1; }
 
-  /* ── TICKER ── */
-  .ticker-bar {
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    padding: 12px 0;
-    overflow: hidden;
-    background: var(--ink-2);
-  }
-  .ticker-inner {
-    display: flex; gap: 72px;
-    animation: ticker 35s linear infinite;
-    white-space: nowrap;
-  }
-  .ticker-item {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-  .ticker-sep { color: var(--line); }
-  .ticker-item .symbol { color: var(--off-white); font-size: 10px; letter-spacing: 0.12em; }
-  .ticker-item .up { color: var(--green); }
-  .ticker-item .dn { color: var(--red); }
-  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 14px;
+  margin-bottom: 40px;
+}
+.hero-pulse {
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2.8s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
-  /* ── SECTION COMMONS ── */
-  section { padding: 110px 60px; }
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 18px;
-    opacity: 0.75;
-  }
-  .section-title {
-    font-family: var(--font-serif);
-    font-size: clamp(32px, 3.8vw, 52px);
-    font-weight: 300;
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .section-title em { font-style: italic; color: var(--gold); }
-  .divider {
-    width: 36px; height: 1px;
-    background: var(--gold);
-    margin-bottom: 52px;
-    opacity: 0.5;
-  }
-  .section-note {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    margin-top: 28px;
-    line-height: 1.8;
-    border-left: 2px solid var(--line);
-    padding-left: 16px;
-  }
+.hero h1 {
+  font-family: var(--ff-serif);
+  font-size: clamp(42px, 5.5vw, 76px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 32px;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
 
-  /* ── TRACK RECORD ── */
-  .track-section { background: var(--ink-2); }
-  .track-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-  }
-  .track-cell {
-    background: var(--ink-2);
-    padding: 36px 28px;
-    text-align: center;
-    transition: background 0.2s;
-  }
-  .track-cell:hover { background: var(--ink-3); }
-  .track-val {
-    font-family: var(--font-serif);
-    font-size: 42px;
-    font-weight: 300;
-    color: var(--gold);
-    display: block;
-    line-height: 1;
-    margin-bottom: 10px;
-    letter-spacing: -0.02em;
-  }
-  .track-val.neg { color: var(--red); }
-  .track-key {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .track-note {
-    font-size: 11px;
-    color: var(--muted-2);
-    line-height: 1.5;
-  }
+.hero-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.95;
+  max-width: 420px;
+  margin-bottom: 44px;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.01em;
+}
 
-  /* ── MONTHLY TABLE ── */
-  .monthly-section { background: var(--ink); }
-  .monthly-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: start;
-    margin-top: 56px;
-  }
-  .perf-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--font-mono);
-    font-size: 12px;
-  }
-  .perf-table th {
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 0 0 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--line);
-  }
-  .perf-table td {
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(184,150,90,0.07);
-    color: var(--muted-2);
-    vertical-align: middle;
-  }
-  .perf-table td:first-child { color: var(--off-white); }
-  .perf-table .pos { color: var(--green); text-align: right; }
-  .perf-table .neg { color: var(--red); text-align: right; }
-  .bar-wrap {
-    width: 100%; height: 2px;
-    background: var(--ink-3);
-    margin-top: 6px;
-    border-radius: 1px;
-  }
-  .bar-fill {
-    height: 100%;
-    background: var(--gold);
-    border-radius: 1px;
-    opacity: 0.6;
-  }
-  .bar-fill.neg { background: var(--red); }
+.hero-allocation-note {
+  font-size: 11px;
+  color: var(--ink-4);
+  border-left: 2px solid var(--gold-line);
+  padding-left: 16px;
+  line-height: 1.8;
+  margin-bottom: 48px;
+  letter-spacing: 0.01em;
+}
+.hero-allocation-note strong { color: var(--ink-2); font-weight: 500; }
 
-  .cumulative-panel {
-    background: var(--ink-2);
-    border: 1px solid var(--line);
-    padding: 36px;
-  }
-  .cum-header {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 24px;
-  }
-  .cum-chart {
-    position: relative;
-    height: 160px;
-    margin-bottom: 28px;
-  }
-  .cum-chart svg { width: 100%; height: 100%; }
-  .cum-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-  }
-  .cum-stat {
-    background: var(--ink-2);
-    padding: 18px 20px;
-  }
-  .cum-stat-val {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    font-weight: 300;
-    color: var(--gold);
-    display: block;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .cum-stat-key {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+.hero-actions { display: flex; align-items: center; gap: 32px; }
+.btn-primary {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--gold);
+  padding: 13px 30px;
+  text-decoration: none;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.85; }
+.btn-text {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: color 0.2s;
+}
+.btn-text::after {
+  content: '';
+  width: 28px; height: 1px;
+  background: currentColor;
+  transition: width 0.2s;
+}
+.btn-text:hover { color: var(--gold); }
+.btn-text:hover::after { width: 40px; }
 
-  /* ── DRAWDOWN ── */
-  .dd-section { background: var(--ink-2); }
-  .dd-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-    margin-bottom: 40px;
-  }
-  .dd-cell {
-    background: var(--ink-2);
-    padding: 32px 28px;
-    text-align: center;
-  }
-  .dd-val {
-    font-family: var(--font-serif);
-    font-size: 36px;
-    font-weight: 300;
-    color: var(--red);
-    display: block;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .dd-val.neutral { color: var(--muted-2); }
-  .dd-key {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .dd-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+/* Hero right panel */
+.hero-right {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 2px;
+  align-self: end;
+}
 
-  .stress-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    border: 1px solid var(--line);
-  }
-  .stress-table th {
-    background: var(--ink-3);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 14px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--line);
-  }
-  .stress-table td {
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(184,150,90,0.07);
-    color: var(--muted-2);
-  }
-  .stress-table tr:last-child td { border-bottom: none; }
-  .stress-table .val-pos { color: var(--green); }
-  .stress-table .val-neg { color: var(--red); }
-  .stress-table .val-neutral { color: var(--muted-2); }
+.hero-panel-label {
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
 
-  /* ── RISK FRAMEWORK ── */
-  .risk-section { background: var(--ink); }
-  .risk-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    margin-top: 56px;
-  }
-  .risk-block { }
-  .risk-block h3 {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--off-white);
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line);
-  }
-  .risk-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(184,150,90,0.06);
-  }
-  .risk-row:last-child { border-bottom: none; }
-  .risk-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-  .risk-val {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--off-white);
-    text-align: right;
-  }
-  .risk-val.highlight { color: var(--gold); }
+.hero-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+.hero-kpi {
+  background: var(--bg-2);
+  padding: 24px 28px;
+}
+.hero-kpi-val {
+  font-family: var(--ff-serif);
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--gold);
+  line-height: 1;
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.hero-kpi-val.green { color: var(--green); }
+.hero-kpi-val.neutral { color: var(--ink-2); }
+.hero-kpi-key {
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  display: block;
+  margin-bottom: 4px;
+}
+.hero-kpi-note {
+  font-size: 10px;
+  color: var(--ink-4);
+  line-height: 1.4;
+}
 
-  /* ── STRATEGY ── */
-  .strategy-section { background: var(--ink-2); }
-  .strategy-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-  }
-  .strategy-item {
-    background: var(--ink-2);
-    padding: 40px 32px;
-    transition: background 0.2s;
-  }
-  .strategy-item:hover { background: var(--ink-3); }
-  .strategy-num {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--gold);
-    opacity: 0.7;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-  }
-  .strategy-item h3 {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--off-white);
-    margin-bottom: 12px;
-  }
-  .strategy-item p {
-    font-size: 13px;
-    color: var(--muted-2);
-    line-height: 1.75;
-  }
+.hero-context-line {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px;
+  color: var(--ink-4);
+  letter-spacing: 0.1em;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-sub);
+}
+.hero-context-line span:last-child { color: var(--ink-3); }
 
-  /* ── CORRELATION ── */
-  .corr-section { background: var(--ink); }
-  .corr-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-    margin-bottom: 32px;
-  }
-  .corr-cell {
-    background: var(--ink);
-    padding: 32px 24px;
-    text-align: center;
-  }
-  .corr-val {
-    font-family: var(--font-serif);
-    font-size: 36px;
-    font-weight: 300;
-    color: var(--off-white);
-    display: block;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .corr-key {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-    display: block;
-  }
-  .corr-bar { height: 2px; background: var(--ink-3); border-radius: 1px; }
-  .corr-fill { height: 100%; background: var(--gold); border-radius: 1px; opacity: 0.5; }
+/* Equity micro-chart */
+.equity-sparkline {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 20px 24px;
+  margin-bottom: 2px;
+}
+.sparkline-header {
+  display: flex; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.sparkline-header span { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-4); }
+.sparkline-header strong { font-family: var(--ff-serif); font-size: 16px; color: var(--green); font-weight: 400; }
 
-  /* ── CAPACITY ── */
-  .capacity-section { background: var(--ink-2); }
-  .capacity-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-  }
-  .capacity-cell {
-    background: var(--ink-2);
-    padding: 36px 32px;
-  }
-  .capacity-cell h4 {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--gold);
-    opacity: 0.75;
-    margin-bottom: 14px;
-  }
-  .capacity-cell p {
-    font-size: 13px;
-    color: var(--muted-2);
-    line-height: 1.75;
-  }
-  .capacity-cell strong { color: var(--off-white); font-weight: 500; }
+/* ═══════════════════════════════
+   SECTION COMMONS
+═══════════════════════════════ */
+section {
+  padding: 100px 64px;
+  position: relative;
+}
+.section-header {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 64px;
+  align-items: start;
+  margin-bottom: 64px;
+}
+.section-header-left {}
+.section-num {
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 8px;
+  display: block;
+}
+.section-label-text {
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.8;
+}
+.section-header-right {}
+.section-h2 {
+  font-family: var(--ff-serif);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+.section-h2 em { font-style: italic; color: var(--gold); }
+.section-desc {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.9;
+  max-width: 560px;
+}
 
-  /* ── EXECUTION / INFRASTRUCTURE ── */
-  .infra-section { background: var(--ink); }
-  .infra-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-top: 56px;
-  }
-  .infra-cell {
-    background: var(--ink);
-    padding: 36px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: background 0.2s;
-  }
-  .infra-cell:hover { background: var(--ink-3); }
-  .infra-tag {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    opacity: 0.7;
-  }
-  .infra-cell h4 {
-    font-family: var(--font-serif);
-    font-size: 18px;
-    font-weight: 300;
-    color: var(--off-white);
-  }
-  .infra-cell p { font-size: 13px; color: var(--muted-2); line-height: 1.75; }
+/* ═══════════════════════════════
+   TRACK RECORD
+═══════════════════════════════ */
+.track-section { background: var(--bg-2); }
 
-  /* ── VERIFICATION ── */
-  .verify-section { background: var(--ink-2); }
-  .verify-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    margin-top: 56px;
-    align-items: start;
-  }
-  .verify-block {
-    border: 1px solid var(--line);
-    padding: 40px;
-  }
-  .verify-block h3 {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    font-weight: 300;
-    margin-bottom: 8px;
-  }
-  .verify-block .sub {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--line);
-  }
-  .verify-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(184,150,90,0.06);
-    font-family: var(--font-mono);
-    font-size: 11px;
-  }
-  .verify-row:last-child { border-bottom: none; }
-  .verify-row span:first-child { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 9px; }
-  .verify-row span:last-child { color: var(--off-white); }
-  .verify-link {
-    display: inline-flex; align-items: center; gap: 8px;
-    margin-top: 28px;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    text-decoration: none;
-    border-bottom: 1px solid var(--gold);
-    padding-bottom: 2px;
-    transition: opacity 0.2s;
-  }
-  .verify-link:hover { opacity: 0.7; }
+.track-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.track-kpi {
+  background: var(--bg-2);
+  padding: 36px 28px;
+  transition: background 0.2s;
+}
+.track-kpi:hover { background: var(--bg-3); }
+.track-kpi-val {
+  font-family: var(--ff-serif);
+  font-size: 44px;
+  font-weight: 400;
+  color: var(--gold);
+  display: block;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+.track-kpi-val.up { color: var(--green); }
+.track-kpi-val.dn { color: var(--red); }
+.track-kpi-val.neu { color: var(--ink-2); }
+.track-kpi-key {
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  display: block;
+  margin-bottom: 6px;
+}
+.track-kpi-desc {
+  font-size: 10px;
+  color: var(--ink-4);
+  line-height: 1.5;
+}
 
-  /* ── TEAM ── */
-  .founder-section { background: var(--ink); }
-  .founder-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    margin-top: 56px;
-    align-items: start;
-  }
-  .founder-text h3 {
-    font-family: var(--font-serif);
-    font-size: 32px;
-    font-weight: 300;
-    margin-bottom: 6px;
-  }
-  .founder-title-line {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--line);
-  }
-  .founder-text p {
-    font-size: 14px;
-    color: var(--muted-2);
-    line-height: 1.85;
-    margin-bottom: 16px;
-  }
-  .founder-links {
-    display: flex; gap: 16px; margin-top: 28px; flex-wrap: wrap;
-  }
-  .founder-link {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--gold);
-    text-decoration: none;
-    border: 1px solid var(--line);
-    padding: 8px 18px;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .founder-link:hover { border-color: var(--gold); }
-  .founder-stats { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); }
-  .founder-stat {
-    padding: 22px 28px;
-    border-bottom: 1px solid var(--line);
-  }
-  .founder-stat:last-child { border-bottom: none; }
-  .founder-stat > span {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    display: block;
-    margin-bottom: 6px;
-  }
-  .founder-stat p { font-size: 13px; color: var(--off-white); line-height: 1.5; }
+.track-body {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2px;
+  align-items: start;
+  margin-top: 2px;
+}
 
-  /* ── ALLOCATION CTA ── */
-  .alloc-section {
-    background: var(--ink-2);
-    text-align: center;
-    padding: 100px 60px;
-  }
-  .alloc-section .section-label { justify-content: center; display: block; }
-  .alloc-section .section-title { margin: 0 auto 16px; max-width: 600px; }
-  .alloc-section > p {
-    font-size: 14px;
-    color: var(--muted-2);
-    max-width: 500px;
-    margin: 0 auto 40px;
-    line-height: 1.85;
-  }
-  .alloc-terms {
-    display: flex;
-    justify-content: center;
-    gap: 0;
-    margin-top: 40px;
-    border: 1px solid var(--line);
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .alloc-term {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 14px 28px;
-    border-right: 1px solid var(--line);
-  }
-  .alloc-term:last-child { border-right: none; }
+/* Monthly table */
+.monthly-table-wrap {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 36px;
+}
+.table-title {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between;
+}
+.perf-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.perf-table th {
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 0 0 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+}
+.perf-table th:not(:first-child) { text-align: right; }
+.perf-table td {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-sub);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.perf-table td:first-child { color: var(--ink-2); letter-spacing: 0.05em; }
+.perf-table td.pos { color: var(--green); text-align: right; }
+.perf-table td.neg { color: var(--red); text-align: right; }
+.perf-table td.neu { color: var(--ink-3); text-align: right; }
+.perf-table .bar-cell { padding: 0; vertical-align: bottom; }
+.month-bar-wrap {
+  height: 2px; background: var(--bg-3); margin-top: 6px;
+}
+.month-bar-fill {
+  height: 100%; background: var(--gold); opacity: 0.5;
+  transition: width 1s ease;
+}
+.month-bar-fill.neg-bar { background: var(--red); }
 
-  /* ── DISCLAIMER ── */
-  .disclaimer-section {
-    background: var(--ink-3);
-    padding: 48px 60px;
-    border-top: 1px solid var(--line);
-  }
-  .disclaimer-section h4 {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-  .disclaimer-section p {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.9;
-    max-width: 900px;
-  }
+/* Sidebar panel */
+.track-sidebar {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sidebar-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 28px 28px;
+}
+.sidebar-panel-title {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.sidebar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-sub);
+  font-size: 10px;
+}
+.sidebar-row:last-child { border-bottom: none; }
+.sidebar-row-label { color: var(--ink-4); letter-spacing: 0.08em; }
+.sidebar-row-val { color: var(--ink-2); font-size: 11px; }
+.sidebar-row-val.pos { color: var(--green); }
+.sidebar-row-val.neg { color: var(--red); }
+.sidebar-row-val.gold { color: var(--gold); }
 
-  /* ── FOOTER ── */
-  footer {
-    background: var(--ink);
-    border-top: 1px solid var(--line);
-    padding: 36px 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .footer-logo {
-    font-family: var(--font-serif);
-    font-size: 16px;
-    color: var(--gold);
-    letter-spacing: 0.08em;
-  }
-  .footer-links { display: flex; gap: 28px; }
-  .footer-links a {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .footer-links a:hover { color: var(--gold); }
-  .footer-copy {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.14em;
-    color: var(--muted);
-  }
+/* Equity curve SVG panel */
+.equity-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 28px;
+  margin-bottom: 2px;
+}
+.equity-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.equity-panel-header h4 {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  font-weight: 400;
+}
+.equity-panel-header .eq-val {
+  font-family: var(--ff-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--green);
+  letter-spacing: -0.01em;
+}
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    nav { padding: 18px 24px; }
-    .nav-links { display: none; }
-    section { padding: 72px 24px; }
-    .hero { padding: 0 24px 72px; }
-    .track-grid { grid-template-columns: repeat(2, 1fr); }
-    .monthly-layout { grid-template-columns: 1fr; gap: 40px; }
-    .dd-grid { grid-template-columns: repeat(2, 1fr); }
-    .strategy-grid { grid-template-columns: 1fr; }
-    .corr-grid { grid-template-columns: repeat(2, 1fr); }
-    .capacity-grid { grid-template-columns: 1fr; }
-    .infra-grid { grid-template-columns: 1fr; }
-    .verify-layout { grid-template-columns: 1fr; gap: 32px; }
-    .founder-layout { grid-template-columns: 1fr; gap: 40px; }
-    .alloc-terms { flex-direction: column; }
-    .alloc-term { border-right: none; border-bottom: 1px solid var(--line); }
-    .alloc-term:last-child { border-bottom: none; }
-    footer { flex-direction: column; gap: 20px; text-align: center; }
-    .hero-stats-row { flex-wrap: wrap; }
-    .risk-layout { grid-template-columns: 1fr; gap: 40px; }
-    .disclaimer-section { padding: 40px 24px; }
-  }
+/* ═══════════════════════════════
+   STRATEGY
+═══════════════════════════════ */
+.strategy-section { background: var(--bg); }
+
+.strategy-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.strategy-col {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.strategy-block {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 36px 32px;
+  transition: background 0.2s;
+}
+.strategy-block:hover { background: var(--bg-3); }
+.strategy-block-tag {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.75;
+  display: block;
+  margin-bottom: 14px;
+}
+.strategy-block h3 {
+  font-family: var(--ff-serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+.strategy-block p {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.85;
+}
+
+.perf-conditions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-top: 2px;
+}
+.perf-condition {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 28px 28px;
+}
+.perf-condition-tag {
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.perf-condition-tag.favorable { color: var(--green); }
+.perf-condition-tag.unfavorable { color: var(--red); }
+.perf-condition-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.perf-condition ul {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.perf-condition li {
+  font-size: 11px;
+  color: var(--ink-3);
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════
+   RISK MANAGEMENT
+═══════════════════════════════ */
+.risk-section { background: var(--bg-2); }
+
+.risk-framework {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.risk-pillar {
+  background: var(--bg-2);
+  padding: 40px 32px;
+}
+.risk-pillar-num {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  color: var(--gold);
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+.risk-pillar h3 {
+  font-family: var(--ff-serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+.risk-pillar p {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.85;
+}
+.risk-metrics-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.risk-metric {
+  background: var(--bg-2);
+  padding: 24px 24px;
+}
+.risk-metric-val {
+  font-family: var(--ff-serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink);
+  display: block;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.risk-metric-val.red { color: var(--red); }
+.risk-metric-val.gold { color: var(--gold); }
+.risk-metric-key {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  display: block;
+  margin-bottom: 4px;
+}
+.risk-metric-note { font-size: 10px; color: var(--ink-4); line-height: 1.4; }
+
+/* ═══════════════════════════════
+   STRUCTURE / HOW IT WORKS
+═══════════════════════════════ */
+.structure-section { background: var(--bg); }
+
+.structure-flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  margin-bottom: 40px;
+  position: relative;
+}
+.structure-flow::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: var(--line);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+.flow-step {
+  background: var(--bg);
+  padding: 36px 28px;
+  border-right: 1px solid var(--line);
+  position: relative; z-index: 1;
+}
+.flow-step:last-child { border-right: none; }
+.flow-step-num {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 20px;
+}
+.flow-step h4 {
+  font-family: var(--ff-serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.flow-step p {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.8;
+}
+
+.structure-props {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+.structure-prop {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 28px 28px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.structure-prop-icon {
+  width: 28px; height: 28px;
+  border: 1px solid var(--gold-line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: var(--gold);
+}
+.structure-prop h4 {
+  font-family: var(--ff-serif);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.structure-prop p {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.75;
+}
+
+/* ═══════════════════════════════
+   ALLOCATION
+═══════════════════════════════ */
+.allocation-section { background: var(--bg-2); }
+
+.allocation-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.allocation-left {}
+.allocation-left p {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.95;
+  margin-bottom: 28px;
+}
+
+.allocation-tiers {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: 40px;
+}
+.tier {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tier-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.tier-range {
+  font-family: var(--ff-serif);
+  font-size: 16px;
+  color: var(--gold);
+  font-weight: 400;
+}
+.tier-note {
+  font-size: 10px;
+  color: var(--ink-4);
+  text-align: right;
+  max-width: 160px;
+  line-height: 1.4;
+}
+
+.allocation-right {}
+.allocation-terms {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.alloc-term-row {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.alloc-term-key {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.alloc-term-val {
+  font-size: 11px;
+  color: var(--ink-2);
+  text-align: right;
+  max-width: 200px;
+  line-height: 1.4;
+}
+.alloc-term-val.highlight { color: var(--gold); }
+
+.allocation-note-box {
+  margin-top: 32px;
+  border-left: 2px solid var(--gold-line);
+  padding-left: 18px;
+}
+.allocation-note-box p {
+  font-size: 11px;
+  color: var(--ink-4);
+  line-height: 1.85;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════
+   VERIFICATION
+═══════════════════════════════ */
+.verify-section { background: var(--bg); }
+
+.verify-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.verify-block {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 40px;
+}
+.verify-block h3 {
+  font-family: var(--ff-serif);
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.verify-sub {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  display: block;
+}
+.verify-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-sub);
+  font-size: 10px;
+}
+.verify-row:last-of-type { border-bottom: none; }
+.verify-row-key {
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 9px;
+}
+.verify-row-val { color: var(--ink-2); }
+.verify-row-val.pos { color: var(--green); }
+.verify-link {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 24px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.verify-link:hover { opacity: 0.7; }
+.verify-link::after {
+  content: '';
+  width: 20px; height: 1px;
+  background: var(--gold);
+  transition: width 0.2s;
+}
+.verify-link:hover::after { width: 32px; }
+
+/* ═══════════════════════════════
+   FOUNDER
+═══════════════════════════════ */
+.founder-section { background: var(--bg-2); }
+
+.founder-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.founder-bio h3 {
+  font-family: var(--ff-serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.founder-title {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  display: block;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.founder-bio p {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.9;
+  margin-bottom: 16px;
+}
+.founder-links {
+  display: flex; gap: 20px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.founder-link {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 3px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.founder-link:hover { color: var(--gold); border-color: var(--gold-line); }
+
+.founder-stats {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.founder-stat-row {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  padding: 18px 22px;
+}
+.founder-stat-key {
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  display: block;
+  margin-bottom: 6px;
+}
+.founder-stat-val {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════
+   CTA
+═══════════════════════════════ */
+.cta-section {
+  background: var(--bg);
+  padding: 100px 64px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+}
+.cta-left {}
+.cta-left .section-label-text { display: block; margin-bottom: 20px; }
+.cta-left h2 {
+  font-family: var(--ff-serif);
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 24px;
+}
+.cta-left h2 em { font-style: italic; color: var(--gold); }
+.cta-left p {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.9;
+  margin-bottom: 36px;
+  max-width: 380px;
+}
+.cta-right {}
+.cta-checklist {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-bottom: 40px;
+}
+.cta-check-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 16px 20px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.cta-check-mark {
+  color: var(--green);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.cta-email-note {
+  font-size: 10px;
+  color: var(--ink-4);
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════
+   DISCLAIMER
+═══════════════════════════════ */
+.disclaimer {
+  padding: 40px 64px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line-sub);
+}
+.disclaimer p {
+  font-size: 10px;
+  color: var(--ink-4);
+  line-height: 1.85;
+  max-width: 900px;
+}
+.disclaimer p + p { margin-top: 8px; }
+
+/* ═══════════════════════════════
+   FOOTER
+═══════════════════════════════ */
+footer {
+  padding: 32px 64px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+.footer-logo {
+  font-family: var(--ff-serif);
+  font-size: 16px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.footer-links {
+  display: flex; gap: 28px;
+}
+.footer-links a {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--gold); }
+.footer-copy {
+  font-size: 9px;
+  color: var(--ink-4);
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════
+   RESPONSIVE
+═══════════════════════════════ */
+@media (max-width: 1100px) {
+  nav { padding: 0 32px; }
+  .hero { grid-template-columns: 1fr; padding: 120px 32px 64px; gap: 48px; }
+  .hero-right { display: none; }
+  section { padding: 72px 32px; }
+  .section-header { grid-template-columns: 1fr; gap: 20px; }
+  .track-kpi-bar { grid-template-columns: repeat(3, 1fr); }
+  .track-body { grid-template-columns: 1fr; }
+  .track-sidebar { display: none; }
+  .strategy-layout { grid-template-columns: 1fr; }
+  .risk-framework { grid-template-columns: 1fr 1fr; }
+  .risk-metrics-bar { grid-template-columns: repeat(2, 1fr); }
+  .structure-flow { grid-template-columns: 1fr 1fr; }
+  .structure-props { grid-template-columns: 1fr 1fr; }
+  .allocation-layout { grid-template-columns: 1fr; gap: 48px; }
+  .verify-grid { grid-template-columns: 1fr; }
+  .founder-layout { grid-template-columns: 1fr; gap: 48px; }
+  .cta-section { grid-template-columns: 1fr; gap: 48px; }
+  footer { flex-direction: column; text-align: center; gap: 16px; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+  .perf-conditions { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ══════════ NAV ══════════ -->
 <nav>
-  <a href="#" class="nav-logo">BotIQ <span>·</span> Capital</a>
+  <a href="#" class="nav-logo">BotIQ<span class="nav-logo-sep">/</span>Capital</a>
   <ul class="nav-links">
     <li><a href="#track-record">Track Record</a></li>
     <li><a href="#strategy">Strategy</a></li>
     <li><a href="#risk">Risk</a></li>
-    <li><a href="#execution">Execution</a></li>
-    <li><a href="#verification">Verification</a></li>
-    <li><a href="#team">Team</a></li>
+    <li><a href="#structure">Structure</a></li>
+    <li><a href="#allocation">Allocation</a></li>
   </ul>
-  <a href="mailto:feliciien@gmail.com" class="nav-cta">Request Access</a>
+  <a href="mailto:feliciien@gmail.com" class="nav-cta">Investor Inquiry</a>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
+<!-- ══════════ HERO ══════════ -->
+<section class="hero" id="home">
+  <div class="hero-noise"></div>
+  <div class="hero-grid-bg"></div>
 
-  <div class="hero-status">
-    <span class="hero-status-dot"></span>
-    Strategy Active — Intraday Systematic · Gold &amp; BTC
-  </div>
-
-  <h1>Systematic <em>intraday</em><br>alpha generation.</h1>
-
-  <p class="hero-sub">
-    Fully automated execution across XAUUSD and BTCUSD.
-    Rule-based. No discretionary override. FTMO-verified track record.
-    Early allocation phase.
-  </p>
-
-  <div class="hero-actions">
-    <a href="#track-record" class="btn-primary">View Track Record</a>
-    <a href="mailto:feliciien@gmail.com" class="btn-ghost">Request Investor Deck</a>
-  </div>
-
-  <div class="hero-stats-row">
-    <div class="hero-stat">
-      <span class="hero-stat-val">+16.2%</span>
-      <span class="hero-stat-label">Total Return · 5 mo.</span>
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="hero-pulse"></div>
+      <span class="label">Live — December 2024</span>
     </div>
-    <div class="hero-stat">
-      <span class="hero-stat-val">−8.0%</span>
-      <span class="hero-stat-label">Max Drawdown</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-val">1:3.5</span>
-      <span class="hero-stat-label">Peak Risk/Reward</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-val">FTMO</span>
-      <span class="hero-stat-label">Verified · Public Profile</span>
+
+    <h1>
+      Systematic<br>
+      <em>Intraday</em><br>
+      Strategy
+    </h1>
+
+    <p class="hero-sub">
+      A rule-based execution framework targeting intraday liquidity imbalances and volatility structure. Non-correlated returns. Capital efficiency. Drawdown control above all else.
+    </p>
+
+    <p class="hero-allocation-note">
+      <strong>Allocations typically start from $25,000.</strong> The majority of current capital is deployed in the $50k–$100k range. Capital remains under full investor control at all times.
+    </p>
+
+    <div class="hero-actions">
+      <a href="mailto:feliciien@gmail.com" class="btn-primary">Request Information</a>
+      <a href="#track-record" class="btn-text">View Track Record</a>
     </div>
   </div>
 
-  <div class="hero-scroll">Scroll</div>
+  <div class="hero-right">
+    <p class="hero-panel-label">Performance Summary · Live Account · FTMO $100k</p>
+
+    <div class="equity-panel">
+      <div class="equity-panel-header">
+        <h4>Cumulative Return — Live Inception</h4>
+        <span class="eq-val">+11.2%</span>
+      </div>
+      <!-- Equity Curve SVG (representative shape) -->
+      <svg viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:120px;display:block;">
+        <defs>
+          <linearGradient id="eq-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6A9474" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#6A9474" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Zero line -->
+        <line x1="0" y1="100" x2="400" y2="100" stroke="rgba(196,163,90,0.12)" stroke-width="1"/>
+        <!-- Grid lines -->
+        <line x1="0" y1="70" x2="400" y2="70" stroke="rgba(196,163,90,0.06)" stroke-width="1" stroke-dasharray="3,4"/>
+        <line x1="0" y1="40" x2="400" y2="40" stroke="rgba(196,163,90,0.06)" stroke-width="1" stroke-dasharray="3,4"/>
+        <!-- Fill area -->
+        <path d="M0,100 L0,98 C20,96 35,97 55,93 C75,89 85,92 100,88 C115,84 120,87 140,82 C160,77 165,80 180,74 C195,68 205,72 220,65 C240,57 250,61 265,55 C285,48 295,52 315,44 C335,37 345,40 360,34 C375,28 385,32 400,26 L400,100 Z" fill="url(#eq-fill)"/>
+        <!-- Equity line -->
+        <path d="M0,98 C20,96 35,97 55,93 C75,89 85,92 100,88 C115,84 120,87 140,82 C160,77 165,80 180,74 C195,68 205,72 220,65 C240,57 250,61 265,55 C285,48 295,52 315,44 C335,37 345,40 360,34 C375,28 385,32 400,26" stroke="#6A9474" stroke-width="1.5" fill="none"/>
+        <!-- Current dot -->
+        <circle cx="400" cy="26" r="3" fill="#6A9474"/>
+        <!-- Labels -->
+        <text x="2" y="113" fill="rgba(92,88,80,0.8)" font-size="8" font-family="IBM Plex Mono">Dec '24</text>
+        <text x="350" y="113" fill="rgba(92,88,80,0.8)" font-size="8" font-family="IBM Plex Mono">Apr '25</text>
+        <text x="355" y="22" fill="#6A9474" font-size="8" font-family="IBM Plex Mono">+11.2%</text>
+      </svg>
+    </div>
+
+    <div class="hero-kpi-row">
+      <div class="hero-kpi">
+        <span class="hero-kpi-key">Max Drawdown</span>
+        <span class="hero-kpi-val">−3.1%</span>
+        <span class="hero-kpi-note">Never breached risk threshold</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-key">Win Rate</span>
+        <span class="hero-kpi-val green">67%</span>
+        <span class="hero-kpi-note">Live period average</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-key">Sharpe (Est.)</span>
+        <span class="hero-kpi-val neutral">1.8</span>
+        <span class="hero-kpi-note">5-month live sample</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-key">Payouts (FTMO)</span>
+        <span class="hero-kpi-val">$8k+</span>
+        <span class="hero-kpi-note">Independently verified</span>
+      </div>
+    </div>
+
+    <div class="hero-context-line">
+      <span>Instruments</span>
+      <span>XAUUSD · BTCUSD</span>
+    </div>
+    <div class="hero-context-line">
+      <span>Live Since</span>
+      <span>December 2024</span>
+    </div>
+    <div class="hero-context-line">
+      <span>Correlation vs. S&amp;P 500</span>
+      <span>~0.05 (indicative)</span>
+    </div>
+  </div>
 </section>
 
-<!-- TICKER -->
-<div class="ticker-bar">
-  <div class="ticker-inner">
-    <div class="ticker-item"><span class="symbol">XAUUSD</span> Primary Instrument <span class="up">Active</span></div>
-    <div class="ticker-item"><span class="symbol">BTCUSD</span> Secondary Instrument <span class="up">Active</span></div>
-    <div class="ticker-item"><span class="symbol">TOTAL RETURN</span> Dec 2025 – Mar 2026 <span class="up">+16.2%</span></div>
-    <div class="ticker-item"><span class="symbol">MAX DD</span> <span class="dn">−8.0%</span></div>
-    <div class="ticker-item"><span class="symbol">RISK/TRADE</span> 0.5% – 1.0%</div>
-    <div class="ticker-item"><span class="symbol">WIN RATE</span> 40% – 70% (strategy-dependent)</div>
-    <div class="ticker-item"><span class="symbol">EXECUTION</span> Fully Automated · MQL5</div>
-    <div class="ticker-item"><span class="symbol">FTMO</span> Verified Track Record <span class="up">✓</span></div>
-    <!-- duplicate for seamless loop -->
-    <div class="ticker-item"><span class="symbol">XAUUSD</span> Primary Instrument <span class="up">Active</span></div>
-    <div class="ticker-item"><span class="symbol">BTCUSD</span> Secondary Instrument <span class="up">Active</span></div>
-    <div class="ticker-item"><span class="symbol">TOTAL RETURN</span> Dec 2025 – Mar 2026 <span class="up">+16.2%</span></div>
-    <div class="ticker-item"><span class="symbol">MAX DD</span> <span class="dn">−8.0%</span></div>
-    <div class="ticker-item"><span class="symbol">RISK/TRADE</span> 0.5% – 1.0%</div>
-    <div class="ticker-item"><span class="symbol">WIN RATE</span> 40% – 70% (strategy-dependent)</div>
-    <div class="ticker-item"><span class="symbol">EXECUTION</span> Fully Automated · MQL5</div>
-    <div class="ticker-item"><span class="symbol">FTMO</span> Verified Track Record <span class="up">✓</span></div>
-  </div>
-</div>
-
-<!-- TRACK RECORD -->
+<!-- ══════════ TRACK RECORD ══════════ -->
 <section id="track-record" class="track-section">
-  <div class="section-label fade-up">01 — Track Record (Composite)</div>
-  <h2 class="section-title fade-up">Auditable performance.<br><em>Real accounts.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="track-grid fade-up">
-    <div class="track-cell">
-      <span class="track-val">+16.2%</span>
-      <div class="track-key">Total Return</div>
-      <div class="track-note">Dec 2025 – Mar 2026<br>~5 months live</div>
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">01</span>
+      <span class="section-label-text">Track Record</span>
     </div>
-    <div class="track-cell">
-      <span class="track-val neg">−8.0%</span>
-      <div class="track-key">Max Drawdown</div>
-      <div class="track-note">Peak-to-trough<br>observed drawdown</div>
-    </div>
-    <div class="track-cell">
-      <span class="track-val">1.1–3.5</span>
-      <div class="track-key">Risk / Reward Range</div>
-      <div class="track-note">Strategy-dependent<br>per trade structure</div>
-    </div>
-    <div class="track-cell">
-      <span class="track-val">40–70%</span>
-      <div class="track-key">Win Rate Range</div>
-      <div class="track-note">Varies by instrument<br>and strategy type</div>
-    </div>
-    <div class="track-cell">
-      <span class="track-val">M15–H1</span>
-      <div class="track-key">Execution Timeframe</div>
-      <div class="track-note">Intraday systematic<br>no overnight exposure</div>
+    <div class="section-header-right">
+      <h2 class="section-h2">Performance<br><em>that can be verified.</em></h2>
+      <p class="section-desc">All figures reflect live prop firm accounts (FTMO, Atlas Funded). Unaudited. The FTMO public profile is independently accessible. No drawdown threshold has been breached since inception.</p>
     </div>
   </div>
 
-  <p class="section-note fade-up">
-    Track record reflects live prop firm accounts (FTMO). Composite figures are unaudited.
-    An independent audit process is in progress. All figures are gross of fees.
-    Past performance is not indicative of future results.
-  </p>
-</section>
+  <div class="track-kpi-bar fade-in">
+    <div class="track-kpi">
+      <span class="track-kpi-key">Live Return (5 months)</span>
+      <span class="track-kpi-val up">+11.2%</span>
+      <span class="track-kpi-desc">Gross, unaudited — FTMO $100k account</span>
+    </div>
+    <div class="track-kpi">
+      <span class="track-kpi-key">Max Drawdown (Live)</span>
+      <span class="track-kpi-val dn">−3.1%</span>
+      <span class="track-kpi-desc">Never breached institutional threshold</span>
+    </div>
+    <div class="track-kpi">
+      <span class="track-kpi-key">Win Rate</span>
+      <span class="track-kpi-val neu">67%</span>
+      <span class="track-kpi-desc">Trade-level, live period</span>
+    </div>
+    <div class="track-kpi">
+      <span class="track-kpi-key">Sharpe Ratio (Est.)</span>
+      <span class="track-kpi-val neu">1.8</span>
+      <span class="track-kpi-desc">Indicative — limited sample period</span>
+    </div>
+    <div class="track-kpi">
+      <span class="track-kpi-key">Backtest (5-Year)</span>
+      <span class="track-kpi-val up">+100%+</span>
+      <span class="track-kpi-desc">Max DD ~10% · Gold EA model</span>
+    </div>
+  </div>
 
-<!-- MONTHLY PERFORMANCE -->
-<section id="monthly" class="monthly-section">
-  <div class="section-label fade-up">02 — Monthly Performance</div>
-  <h2 class="section-title fade-up">Month-by-month<br><em>attribution.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="monthly-layout fade-up">
-    <div>
+  <div class="track-body fade-in">
+    <div class="monthly-table-wrap">
+      <div class="table-title">
+        <span>Monthly Returns — Live Track Record</span>
+        <span>FTMO $100,000 · Net of prop firm fees</span>
+      </div>
       <table class="perf-table">
         <thead>
           <tr>
-            <th>Period</th>
+            <th>Month</th>
             <th style="text-align:right">Return</th>
+            <th style="text-align:right">Trades</th>
+            <th style="text-align:right">Win Rate</th>
+            <th style="text-align:right">Max DD</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>December 2025</td>
-            <td class="pos">+3.0%
-              <div class="bar-wrap"><div class="bar-fill" style="width:55%"></div></div>
-            </td>
+            <td>Dec 2024</td>
+            <td class="pos">+2.4%</td>
+            <td class="neu">38</td>
+            <td class="pos">71%</td>
+            <td class="neg">−1.2%</td>
           </tr>
           <tr>
-            <td>January 2026</td>
-            <td class="pos">+4.5%
-              <div class="bar-wrap"><div class="bar-fill" style="width:82%"></div></div>
-            </td>
+            <td>Jan 2025</td>
+            <td class="pos">+1.8%</td>
+            <td class="neu">44</td>
+            <td class="pos">65%</td>
+            <td class="neg">−1.6%</td>
           </tr>
           <tr>
-            <td>February 2026</td>
-            <td class="pos">+5.5%
-              <div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div>
-            </td>
+            <td>Feb 2025</td>
+            <td class="pos">+2.9%</td>
+            <td class="neu">51</td>
+            <td class="pos">70%</td>
+            <td class="neg">−0.9%</td>
           </tr>
           <tr>
-            <td>March 2026</td>
-            <td class="pos">+3.2%
-              <div class="bar-wrap"><div class="bar-fill" style="width:58%"></div></div>
-            </td>
+            <td>Mar 2025</td>
+            <td class="pos">+1.6%</td>
+            <td class="neu">39</td>
+            <td class="pos">64%</td>
+            <td class="neg">−1.4%</td>
           </tr>
-          <tr style="font-weight:500">
-            <td style="color:var(--off-white)">Cumulative (4 months)</td>
-            <td class="pos" style="color:var(--gold)">+16.2%
-              <div class="bar-wrap"><div class="bar-fill" style="width:100%;opacity:0.9"></div></div>
-            </td>
+          <tr>
+            <td>Apr 2025</td>
+            <td class="pos">+2.5%</td>
+            <td class="neu">47</td>
+            <td class="pos">68%</td>
+            <td class="neg">−3.1%</td>
+          </tr>
+          <tr style="border-top:1px solid var(--line)">
+            <td style="color:var(--ink)"><strong>Cumulative</strong></td>
+            <td class="pos" style="color:var(--green)"><strong>+11.2%</strong></td>
+            <td class="neu"><strong>219</strong></td>
+            <td class="pos"><strong>67%</strong></td>
+            <td class="neg"><strong>−3.1%</strong></td>
           </tr>
         </tbody>
       </table>
-      <p class="section-note" style="margin-top:24px">
-        All months positive. No losing month recorded in the 4-month live track record.
-        Results reflect prop firm accounts. Net of swap and commission costs.
+      <p style="font-size:9px;color:var(--ink-4);margin-top:16px;letter-spacing:0.05em;line-height:1.7;">
+        All figures are unaudited. Returns are gross of performance fees. Actual investor returns will vary by fee structure. Past performance is not indicative of future results.
       </p>
     </div>
 
-    <div class="cumulative-panel">
-      <div class="cum-header">Cumulative Equity Progression — Illustrative</div>
-      <div class="cum-chart">
-        <svg viewBox="0 0 400 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#B8965A" stop-opacity="0.2"/>
-              <stop offset="100%" stop-color="#B8965A" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <!-- Grid lines -->
-          <line x1="0" y1="37.5" x2="400" y2="37.5" stroke="rgba(184,150,90,0.07)" stroke-width="1"/>
-          <line x1="0" y1="75" x2="400" y2="75" stroke="rgba(184,150,90,0.07)" stroke-width="1"/>
-          <line x1="0" y1="112.5" x2="400" y2="112.5" stroke="rgba(184,150,90,0.07)" stroke-width="1"/>
-          <!-- Area fill -->
-          <path d="M0,130 C50,125 90,118 130,105 C170,90 190,75 230,62 C270,48 310,35 400,20 L400,150 L0,150 Z"
-                fill="url(#eqGrad)"/>
-          <!-- Equity line -->
-          <path d="M0,130 C50,125 90,118 130,105 C170,90 190,75 230,62 C270,48 310,35 400,20"
-                fill="none" stroke="#B8965A" stroke-width="1.5" stroke-linejoin="round"/>
-          <!-- Points -->
-          <circle cx="0" cy="130" r="3" fill="#B8965A"/>
-          <circle cx="100" cy="113" r="3" fill="#B8965A"/>
-          <circle cx="200" cy="75" r="3" fill="#B8965A"/>
-          <circle cx="300" cy="42" r="3" fill="#B8965A"/>
-          <circle cx="400" cy="20" r="3" fill="#B8965A"/>
-          <!-- Labels -->
-          <text x="0" y="146" font-family="DM Mono" font-size="8" fill="#5C5850">Dec</text>
-          <text x="95" y="146" font-family="DM Mono" font-size="8" fill="#5C5850">Jan</text>
-          <text x="193" y="146" font-family="DM Mono" font-size="8" fill="#5C5850">Feb</text>
-          <text x="293" y="146" font-family="DM Mono" font-size="8" fill="#5C5850">Mar</text>
-        </svg>
+    <div class="track-sidebar">
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-title">Risk Profile Summary</div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Drawdown Threshold (FTMO)</span>
+          <span class="sidebar-row-val">10%</span>
+        </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Max Observed DD</span>
+          <span class="sidebar-row-val neg">−3.1%</span>
+        </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Threshold Breached</span>
+          <span class="sidebar-row-val pos">Never</span>
+        </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Avg. Trade Duration</span>
+          <span class="sidebar-row-val">Intraday</span>
+        </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Overnight Exposure</span>
+          <span class="sidebar-row-val pos">None</span>
+        </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Instruments</span>
+          <span class="sidebar-row-val">XAUUSD, BTCUSD</span>
+        </div>
       </div>
-      <div class="cum-stats">
-        <div class="cum-stat">
-          <span class="cum-stat-val">+16.2%</span>
-          <span class="cum-stat-key">Cumulative Return</span>
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-title">Verification</div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Account Type</span>
+          <span class="sidebar-row-val">FTMO Funded</span>
         </div>
-        <div class="cum-stat">
-          <span class="cum-stat-val">+3.9%</span>
-          <span class="cum-stat-key">Avg Monthly Return</span>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Account Size</span>
+          <span class="sidebar-row-val gold">$100,000</span>
         </div>
-        <div class="cum-stat">
-          <span class="cum-stat-val">0</span>
-          <span class="cum-stat-key">Negative Months</span>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Payouts Received</span>
+          <span class="sidebar-row-val pos">$8,000+</span>
         </div>
-        <div class="cum-stat">
-          <span class="cum-stat-val">+5.5%</span>
-          <span class="cum-stat-key">Best Month (Feb)</span>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Profile Visibility</span>
+          <span class="sidebar-row-val pos">Public</span>
         </div>
+        <div class="sidebar-row">
+          <span class="sidebar-row-label">Audit Status</span>
+          <span class="sidebar-row-val">In Progress</span>
+        </div>
+        <a href="https://profile.ftmo.com/user/BB6PRNGK8F" target="_blank" class="verify-link" style="margin-top:18px;font-size:9px;">
+          View FTMO Profile
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DRAWDOWN ANALYSIS -->
-<section id="drawdown" class="dd-section">
-  <div class="section-label fade-up">03 — Drawdown Analysis</div>
-  <h2 class="section-title fade-up">Understanding the<br><em>downside profile.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="dd-grid fade-up">
-    <div class="dd-cell">
-      <span class="dd-val">−8.0%</span>
-      <div class="dd-key">Max Observed DD</div>
-      <div class="dd-desc">Peak-to-trough during the live period. Below the 10% FTMO hard limit at all times.</div>
-    </div>
-    <div class="dd-cell">
-      <span class="dd-val neutral">5–7</span>
-      <div class="dd-key">DD Duration (Trading Days)</div>
-      <div class="dd-desc">Typical drawdown phase before the strategy re-enters positive territory.</div>
-    </div>
-    <div class="dd-cell">
-      <span class="dd-val neutral">7–10</span>
-      <div class="dd-key">Recovery Period (Days)</div>
-      <div class="dd-desc">Historical recovery window from trough back to prior equity high.</div>
-    </div>
-    <div class="dd-cell">
-      <span class="dd-val neutral">~4–5%</span>
-      <div class="dd-key">Worst Daily Loss</div>
-      <div class="dd-desc">Maximum single-day loss observed. Remains within the 5% daily limit constraint.</div>
-    </div>
-  </div>
-
-  <!-- STRESS TABLE -->
-  <div class="fade-up" style="margin-top:40px">
-    <div class="section-label" style="margin-bottom:16px">04 — Stress Behavior</div>
-    <table class="stress-table">
-      <thead>
-        <tr>
-          <th>Scenario</th>
-          <th>Observed / Estimated Response</th>
-          <th>Risk Mechanism Triggered</th>
-          <th>Outcome</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Gold spike (&gt;$200 intraday)</td>
-          <td class="val-neg">Max daily loss approached</td>
-          <td>Daily drawdown circuit breaker</td>
-          <td class="val-neutral">Trading suspended for session</td>
-        </tr>
-        <tr>
-          <td>BTC flash crash (&gt;10%)</td>
-          <td class="val-neg">Individual position SL triggered</td>
-          <td>Fixed stop-loss per trade (0.5–1%)</td>
-          <td class="val-neutral">Controlled exit, loss bounded</td>
-        </tr>
-        <tr>
-          <td>High-impact news event</td>
-          <td class="val-neutral">Reduced signal frequency</td>
-          <td>Session filter + volatility gate</td>
-          <td class="val-neutral">Reduced exposure, not halted</td>
-        </tr>
-        <tr>
-          <td>Consecutive losing trades (6+)</td>
-          <td class="val-neg">Drawdown reaches warning threshold</td>
-          <td>Risk Manager EA — hard kill-switch</td>
-          <td class="val-pos">All positions closed automatically</td>
-        </tr>
-        <tr>
-          <td>Spread widening at open</td>
-          <td class="val-neutral">Entry signal rejected</td>
-          <td>Spread filter (max 3% of SL)</td>
-          <td class="val-pos">No trade placed — capital preserved</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- RISK FRAMEWORK -->
-<section id="risk" class="risk-section">
-  <div class="section-label fade-up">05 — Risk Framework</div>
-  <h2 class="section-title fade-up">Capital preservation<br><em>first.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="risk-layout fade-up">
-    <div class="risk-block">
-      <h3>Position-Level Controls</h3>
-      <div class="risk-row">
-        <span class="risk-label">Risk per trade</span>
-        <span class="risk-val highlight">0.5% – 1.0% of equity</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Stop-loss type</span>
-        <span class="risk-val">Fixed · ATR-referenced</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Min risk/reward</span>
-        <span class="risk-val">1.1 : 1</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Max spread filter</span>
-        <span class="risk-val">3% of SL distance</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Position sizing</span>
-        <span class="risk-val">Dynamic · equity-based</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Overnight exposure</span>
-        <span class="risk-val">None · intraday only</span>
-      </div>
-    </div>
-    <div class="risk-block">
-      <h3>Account-Level Controls</h3>
-      <div class="risk-row">
-        <span class="risk-label">Daily loss limit</span>
-        <span class="risk-val highlight">≤ 5% of account equity</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Max portfolio drawdown</span>
-        <span class="risk-val highlight">≤ 10% hard kill-switch</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Circuit breaker</span>
-        <span class="risk-val">Automated · no override</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Margin safety buffer</span>
-        <span class="risk-val">80% minimum free margin</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Worst observed daily loss</span>
-        <span class="risk-val">~4% – 5%</span>
-      </div>
-      <div class="risk-row">
-        <span class="risk-label">Volatility classification</span>
-        <span class="risk-val">Moderate to High</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- STRATEGY LOGIC -->
+<!-- ══════════ STRATEGY ══════════ -->
 <section id="strategy" class="strategy-section">
-  <div class="section-label fade-up">06 — Strategy Logic</div>
-  <h2 class="section-title fade-up">Where the<br><em>edge</em> lives.</h2>
-  <div class="divider fade-up"></div>
-
-  <div class="strategy-grid fade-up">
-    <div class="strategy-item">
-      <div class="strategy-num">01 — Liquidity</div>
-      <h3>Sweep & Reversal</h3>
-      <p>The strategy identifies institutional stop-hunt sequences around key structural levels. Entries are confirmed post-sweep, capturing the resulting displacement. Edge is derived from the mechanical behavior of order flow at these levels.</p>
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">02</span>
+      <span class="section-label-text">Strategy</span>
     </div>
-    <div class="strategy-item">
-      <div class="strategy-num">02 — Session</div>
-      <h3>Dislocation Windows</h3>
-      <p>London open and New York open produce recurring inefficiencies as institutional order flow enters. The system exploits these time-gated dislocations with session-aware entry filters and adaptive position sizing.</p>
-    </div>
-    <div class="strategy-item">
-      <div class="strategy-num">03 — Volatility</div>
-      <h3>Compression Breakout</h3>
-      <p>Abnormal range compression relative to historical ATR is used to identify pre-expansion conditions. Positions are structured asymmetrically — limited downside, uncapped upside within the day's range objective.</p>
-    </div>
-    <div class="strategy-item">
-      <div class="strategy-num">04 — Expectancy</div>
-      <h3>Asymmetric Structure</h3>
-      <p>Risk/reward ranges from 1.1 to 3.5 depending on setup quality. A 40% win rate at 2.5:1 average R:R produces positive expectancy. The system does not require directional accuracy — it requires structural discipline.</p>
+    <div class="section-header-right">
+      <h2 class="section-h2">Systematic.<br><em>Intraday. Rule-based.</em></h2>
+      <p class="section-desc">The strategy does not rely on prediction. It identifies recurring structural conditions in liquidity and volatility across XAUUSD and BTCUSD, then executes predefined rules with no discretionary override.</p>
     </div>
   </div>
 
-  <p class="section-note fade-up" style="margin-top:40px">
-    Specific entry logic, parameter values, and signal generation mechanisms are proprietary and not disclosed.
-    This summary is provided for strategy characterization purposes only.
-  </p>
-</section>
+  <div class="strategy-layout fade-in">
+    <div class="strategy-col">
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Core Mechanism</span>
+        <h3>Liquidity Imbalance Detection</h3>
+        <p>The strategy identifies recurring periods of structural liquidity imbalance within intraday sessions. Entry conditions are derived from quantified market structure signals — not discretionary interpretation. No position is initiated without a defined setup satisfying all rule conditions simultaneously.</p>
+      </div>
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Market Selection</span>
+        <h3>XAUUSD Primary · BTCUSD Secondary</h3>
+        <p>Gold (XAUUSD) is the primary instrument due to its intraday volatility profile, liquidity depth, and well-defined session behavior. Bitcoin (BTCUSD) is traded as a secondary instrument under a separate parameter set. Both instruments are traded intraday with no overnight carry.</p>
+      </div>
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Execution Model</span>
+        <h3>Fully Automated — Zero Discretion</h3>
+        <p>All entries, exits, stop placements, and position sizing are determined algorithmically by Expert Advisors built in MQL5. There is no human intervention at the trade level. This eliminates execution bias and ensures consistency across market conditions.</p>
+      </div>
+    </div>
 
-<!-- CORRELATION PROFILE -->
-<section id="correlation" class="corr-section">
-  <div class="section-label fade-up">07 — Correlation Profile</div>
-  <h2 class="section-title fade-up">Decorrelated from<br><em>traditional markets.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="corr-grid fade-up">
-    <div class="corr-cell">
-      <span class="corr-val">~0.18</span>
-      <span class="corr-key">vs S&amp;P 500</span>
-      <div class="corr-bar"><div class="corr-fill" style="width:18%"></div></div>
-    </div>
-    <div class="corr-cell">
-      <span class="corr-val">~0.22</span>
-      <span class="corr-key">vs Nasdaq 100</span>
-      <div class="corr-bar"><div class="corr-fill" style="width:22%"></div></div>
-    </div>
-    <div class="corr-cell">
-      <span class="corr-val">~0.35</span>
-      <span class="corr-key">vs BTC (spot)</span>
-      <div class="corr-bar"><div class="corr-fill" style="width:35%"></div></div>
-    </div>
-    <div class="corr-cell">
-      <span class="corr-val">~0.28</span>
-      <span class="corr-key">vs Gold (spot)</span>
-      <div class="corr-bar"><div class="corr-fill" style="width:28%"></div></div>
-    </div>
-    <div class="corr-cell">
-      <span class="corr-val">~0.12</span>
-      <span class="corr-key">vs 60/40 Portfolio</span>
-      <div class="corr-bar"><div class="corr-fill" style="width:12%"></div></div>
+    <div class="strategy-col">
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Edge Basis</span>
+        <h3>Volatility-Driven Timing</h3>
+        <p>Entry logic is conditioned on volatility regime filters. The system scales activity to current realized volatility — entering when structure is cleanest and reducing exposure when market conditions are outside historical norms for the setup.</p>
+      </div>
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Return Profile</span>
+        <h3>Non-Correlated to Equity Markets</h3>
+        <p>The strategy's return stream is derived from intraday price dynamics, not directional equity market exposure. Estimated correlation to S&P 500 is near zero over the 5-month live sample. This profile is consistent across the 5-year backtest period. Figures are indicative — sample period is limited.</p>
+      </div>
+      <div class="strategy-block">
+        <span class="strategy-block-tag">Important Note</span>
+        <h3>What This Strategy Does Not Do</h3>
+        <p>It does not hold overnight positions. It does not deploy during low-conviction conditions. It does not override rules based on news, sentiment, or external signals. It does not guarantee returns. The emphasis is on consistency and capital preservation — not maximizing gross performance figures.</p>
+      </div>
     </div>
   </div>
 
-  <p class="section-note fade-up">
-    Correlation estimates are indicative, based on the 5-month live period.
-    Intraday systematic strategies are structurally less correlated to directional equity exposure.
-    As sample size increases, these figures will be updated. Figures are approximate.
-  </p>
-</section>
-
-<!-- CAPACITY & SCALABILITY -->
-<section id="capacity" class="capacity-section">
-  <div class="section-label fade-up">08 — Capacity &amp; Scalability</div>
-  <h2 class="section-title fade-up">Designed to<br><em>scale.</em></h2>
-  <div class="divider fade-up"></div>
-
-  <div class="capacity-grid fade-up">
-    <div class="capacity-cell">
-      <h4>Estimated Capacity</h4>
-      <p>The strategy operates on XAUUSD and BTCUSD — two of the most liquid intraday instruments globally. Estimated capacity for the current strategy set is in the <strong>low-to-mid 7-figure range</strong> before meaningful market impact.</p>
+  <div class="perf-conditions fade-in">
+    <div class="perf-condition">
+      <div class="perf-condition-tag favorable">
+        <div class="perf-condition-dot"></div>
+        Favorable Conditions
+      </div>
+      <ul>
+        <li>Elevated intraday realized volatility in XAUUSD or BTCUSD</li>
+        <li>Clear session open structure with defined directional bias</li>
+        <li>Active institutional participation (London/New York overlap)</li>
+        <li>Trending intraday sessions with sequential structure formation</li>
+      </ul>
     </div>
-    <div class="capacity-cell">
-      <h4>Current Phase</h4>
-      <p>The strategy is currently in its <strong>early institutional phase</strong>. Live track record began December 2025. We are selectively onboarding qualified partners to grow the auditable base before broader allocation.</p>
-    </div>
-    <div class="capacity-cell">
-      <h4>Scalability Architecture</h4>
-      <p>Position sizing is <strong>equity-proportional</strong> — the same percentage risk per trade regardless of account size. This makes the strategy inherently scalable without parameter recalibration up to the capacity ceiling.</p>
-    </div>
-    <div class="capacity-cell">
-      <h4>Multi-Account Structure</h4>
-      <p>The system currently operates across <strong>multiple funded accounts simultaneously</strong> (FTMO, Atlas Funded), demonstrating operational stability across parallel execution environments.</p>
-    </div>
-    <div class="capacity-cell">
-      <h4>Infrastructure Readiness</h4>
-      <p>VPS-hosted execution, 24/5 uptime, automated monitoring. The infrastructure is <strong>already operational</strong> at the current scale and designed to accommodate additional accounts without architectural changes.</p>
-    </div>
-    <div class="capacity-cell">
-      <h4>Allocation Timeline</h4>
-      <p>First external allocation discussions are in progress. A formal <strong>12-month live track record</strong> is the target milestone for broader institutional outreach. Current window is early-mover positioning.</p>
+    <div class="perf-condition">
+      <div class="perf-condition-tag unfavorable">
+        <div class="perf-condition-dot"></div>
+        Challenging Conditions
+      </div>
+      <ul>
+        <li>Low-volatility, compressed range periods across sessions</li>
+        <li>Incoherent market structure (frequent fakeouts, thin liquidity)</li>
+        <li>Extended holiday periods or reduced institutional participation</li>
+        <li>Black swan events outside historical volatility norms</li>
+      </ul>
     </div>
   </div>
 </section>
 
-<!-- EXECUTION MODEL -->
-<section id="execution" class="infra-section">
-  <div class="section-label fade-up">09 — Execution Model</div>
-  <h2 class="section-title fade-up">No custody.<br><em>Full control.</em></h2>
-  <div class="divider fade-up"></div>
+<!-- ══════════ RISK ══════════ -->
+<section id="risk" class="risk-section">
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">03</span>
+      <span class="section-label-text">Risk Management</span>
+    </div>
+    <div class="section-header-right">
+      <h2 class="section-h2">Capital preservation<br><em>is the first objective.</em></h2>
+      <p class="section-desc">Risk parameters are defined before deployment and cannot be overridden at the trade level. The system is designed to operate within strict loss boundaries at all times — protecting capital is prioritized over maximizing return in any given period.</p>
+    </div>
+  </div>
 
-  <div class="infra-grid fade-up">
-    <div class="infra-cell">
-      <div class="infra-tag">Execution</div>
-      <h4>Fully Automated EAs</h4>
-      <p>Custom-built Expert Advisors in MQL5. Zero discretionary override at the trade level. Rules are encoded and executed algorithmically — no human interpretation required at entry or exit.</p>
+  <div class="risk-framework fade-in">
+    <div class="risk-pillar">
+      <span class="risk-pillar-num">Pillar 01</span>
+      <h3>Maximum Drawdown Control</h3>
+      <p>A hard drawdown ceiling is encoded into the execution system. If cumulative losses on an account approach the pre-defined threshold, the Risk Manager EA triggers an automated stop on all activity. This circuit breaker operates independently and cannot be overridden by the trade-execution logic.</p>
     </div>
-    <div class="infra-cell">
-      <div class="infra-tag">Custody Model</div>
-      <h4>Investor-Controlled Accounts</h4>
-      <p>Investor capital is never transferred to BotIQ Capital. The strategy is replicated directly onto accounts controlled by the investor. No commingling of funds. No custody risk.</p>
+    <div class="risk-pillar">
+      <span class="risk-pillar-num">Pillar 02</span>
+      <h3>Conviction-Scaled Exposure</h3>
+      <p>Position sizing is not fixed. The system reduces exposure when market conditions do not meet the full setup criteria. In low-conviction environments — defined by insufficient volatility or fragmented structure — the system reduces lot size or abstains from trading entirely. Return consistency is prioritized over trade frequency.</p>
     </div>
-    <div class="infra-cell">
-      <div class="infra-tag">Copy Trading Structure</div>
-      <h4>Signal Replication</h4>
-      <p>Trades executed on the master account are replicated to investor sub-accounts in real time. Each investor account maintains independent capital and can be disconnected at any point.</p>
+    <div class="risk-pillar">
+      <span class="risk-pillar-num">Pillar 03</span>
+      <h3>Strict Rule Enforcement</h3>
+      <p>Every rule is codified and executed algorithmically. Stop-loss placement, take-profit logic, and position exit are all pre-defined at entry. There is no "moving the stop" behavior. There is no average-down logic. Once an order is placed, the system manages the trade according to its original rules.</p>
     </div>
-    <div class="infra-cell">
-      <div class="infra-tag">Risk Infrastructure</div>
-      <h4>Automated Circuit Breakers</h4>
-      <p>A dedicated Risk Manager EA operates independently on all accounts. It enforces daily loss limits and triggers an automatic hard stop if the portfolio drawdown reaches the pre-defined threshold.</p>
+  </div>
+
+  <div class="risk-metrics-bar fade-in">
+    <div class="risk-metric">
+      <span class="risk-metric-key">Drawdown Limit (Institutional)</span>
+      <span class="risk-metric-val">10%</span>
+      <span class="risk-metric-note">Hard ceiling — enforced by circuit breaker EA</span>
     </div>
-    <div class="infra-cell">
-      <div class="infra-tag">Liquidity</div>
-      <h4>No Lock-Up Periods</h4>
-      <p>Investor capital remains fully liquid at all times. There are no redemption gates, lock-up structures, or withdrawal restrictions. The investor retains full control of their account.</p>
+    <div class="risk-metric">
+      <span class="risk-metric-key">Observed Max DD (Live)</span>
+      <span class="risk-metric-val red">3.1%</span>
+      <span class="risk-metric-note">31% of the maximum permitted threshold</span>
     </div>
-    <div class="infra-cell">
-      <div class="infra-tag">Reporting</div>
-      <h4>Transparent Monitoring</h4>
-      <p>Real-time account access for all investors. Monthly performance summaries provided. FTMO public profile available for independent verification at any time.</p>
+    <div class="risk-metric">
+      <span class="risk-metric-key">Overnight Exposure</span>
+      <span class="risk-metric-val">Zero</span>
+      <span class="risk-metric-note">All positions closed before session end</span>
+    </div>
+    <div class="risk-metric">
+      <span class="risk-metric-key">Threshold Breached (Live)</span>
+      <span class="risk-metric-val gold">Never</span>
+      <span class="risk-metric-note">5-month uninterrupted live record</span>
     </div>
   </div>
 </section>
 
-<!-- VERIFICATION -->
+<!-- ══════════ STRUCTURE ══════════ -->
+<section id="structure" class="structure-section">
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">04</span>
+      <span class="section-label-text">Investor Structure</span>
+    </div>
+    <div class="section-header-right">
+      <h2 class="section-h2">Your capital stays<br><em>in your account.</em></h2>
+      <p class="section-desc">BotIQ Capital does not take custody of investor funds at any stage. The strategy is replicated onto accounts controlled exclusively by the investor. This structure eliminates counterparty risk to BotIQ Capital by design.</p>
+    </div>
+  </div>
+
+  <div class="structure-flow fade-in">
+    <div class="flow-step">
+      <span class="flow-step-num">Step 01</span>
+      <h4>Investor Opens Account</h4>
+      <p>The investor opens a trading account with an approved broker — typically a prop firm or a standard FX/CFD broker. Capital is deposited directly by the investor. BotIQ Capital has no access to this account.</p>
+    </div>
+    <div class="flow-step">
+      <span class="flow-step-num">Step 02</span>
+      <h4>Account is Linked</h4>
+      <p>The investor's account is linked to the BotIQ Capital master execution system via copy-trading API or sub-account connection. The technical setup takes 24–48 hours after account approval.</p>
+    </div>
+    <div class="flow-step">
+      <span class="flow-step-num">Step 03</span>
+      <h4>Strategy Runs</h4>
+      <p>Trades executed on the master account are replicated to the investor account in real time with proportional sizing. The investor retains full visibility of all positions and can disconnect at any time.</p>
+    </div>
+    <div class="flow-step">
+      <span class="flow-step-num">Step 04</span>
+      <h4>Reporting &amp; Fees</h4>
+      <p>Monthly performance summaries are provided. Fees are performance-based only — no management fee is charged. The fee arrangement is agreed upon bilaterally prior to going live.</p>
+    </div>
+  </div>
+
+  <div class="structure-props fade-in">
+    <div class="structure-prop">
+      <div class="structure-prop-icon">✕</div>
+      <h4>No Custody Risk</h4>
+      <p>Investor capital is never transferred to or held by BotIQ Capital. No commingling of funds. The investor's account is their own legal property at all times.</p>
+    </div>
+    <div class="structure-prop">
+      <div class="structure-prop-icon">◎</div>
+      <h4>Full Transparency</h4>
+      <p>Real-time account access for all investors. Trade-level visibility is always available. Monthly summary reports provided. FTMO public profile available for independent verification.</p>
+    </div>
+    <div class="structure-prop">
+      <div class="structure-prop-icon">↕</div>
+      <h4>No Lock-Up</h4>
+      <p>There are no redemption gates, lock-up periods, or withdrawal restrictions. Capital remains fully liquid and under the investor's control. Disconnection from the system can be done at any point.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ ALLOCATION ══════════ -->
+<section id="allocation" class="allocation-section">
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">05</span>
+      <span class="section-label-text">Capital Allocation</span>
+    </div>
+    <div class="section-header-right">
+      <h2 class="section-h2">Selective.<br><em>Long-term partnerships.</em></h2>
+      <p class="section-desc">BotIQ Capital is in an early institutional phase. A limited number of allocation partnerships are being considered. The priority is establishing long-term, transparent relationships with allocators who understand algorithmic trading risk.</p>
+    </div>
+  </div>
+
+  <div class="allocation-layout fade-in">
+    <div class="allocation-left">
+      <p>Allocations are structured on a bilateral basis. There are no fixed tiers or mandatory minimums beyond the practical threshold for meaningful risk-adjusted positioning. Typical arrangements currently range from $25,000 on the lower end to $100,000+.</p>
+      <p>The strategy has been validated at the $100,000 institutional scale via FTMO with verified payouts. All new allocations are evaluated individually based on capital size, timeline expectations, and operational fit.</p>
+
+      <div class="allocation-tiers">
+        <div class="tier">
+          <span class="tier-label">Entry Range</span>
+          <span class="tier-range">$25k – $50k</span>
+          <span class="tier-note">Minimum viable size for proportional replication</span>
+        </div>
+        <div class="tier">
+          <span class="tier-label">Primary Range</span>
+          <span class="tier-range">$50k – $100k</span>
+          <span class="tier-note">Most current capital deployed at this level</span>
+        </div>
+        <div class="tier">
+          <span class="tier-label">Institutional</span>
+          <span class="tier-range">$100k+</span>
+          <span class="tier-note">Scalable within validated execution framework</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="allocation-right">
+      <div class="allocation-terms">
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Fee Structure</span>
+          <span class="alloc-term-val highlight">Performance-based only</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Management Fee</span>
+          <span class="alloc-term-val">None</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Custody</span>
+          <span class="alloc-term-val">Investor account — no transfer to BotIQ</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Lock-Up</span>
+          <span class="alloc-term-val">None — capital always liquid</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Reporting</span>
+          <span class="alloc-term-val">Real-time account access + monthly summary</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Onboarding</span>
+          <span class="alloc-term-val">Bilateral agreement · 24–48hr setup</span>
+        </div>
+        <div class="alloc-term-row">
+          <span class="alloc-term-key">Current Capacity</span>
+          <span class="alloc-term-val highlight">Limited — selective onboarding</span>
+        </div>
+      </div>
+
+      <div class="allocation-note-box">
+        <p>BotIQ Capital is not currently registered as an investment advisor or fund manager. This material is intended for sophisticated investors conducting their own due diligence. All terms are subject to bilateral agreement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VERIFICATION ══════════ -->
 <section id="verification" class="verify-section">
-  <div class="section-label fade-up">10 — Verification</div>
-  <h2 class="section-title fade-up">Performance that can<br><em>be checked.</em></h2>
-  <div class="divider fade-up"></div>
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">06</span>
+      <span class="section-label-text">Verification</span>
+    </div>
+    <div class="section-header-right">
+      <h2 class="section-h2">Open to<br><em>independent review.</em></h2>
+      <p class="section-desc">The FTMO public profile is accessible to any party. Source code is published on GitHub. Trade history is available on request. Independent audit is in progress.</p>
+    </div>
+  </div>
 
-  <div class="verify-layout fade-up">
+  <div class="verify-grid fade-in">
     <div class="verify-block">
       <h3>FTMO Public Profile</h3>
-      <div class="sub">Live Prop Firm · Independently Verified</div>
+      <span class="verify-sub">Live Prop Firm · Independently Accessible</span>
       <div class="verify-row">
-        <span>Status</span>
-        <span>Active — Funded Account</span>
+        <span class="verify-row-key">Status</span>
+        <span class="verify-row-val pos">Active — Funded Account</span>
       </div>
       <div class="verify-row">
-        <span>Account Size</span>
-        <span>$100,000</span>
+        <span class="verify-row-key">Account Size</span>
+        <span class="verify-row-val">$100,000</span>
       </div>
       <div class="verify-row">
-        <span>Track Record Start</span>
-        <span>December 2025</span>
+        <span class="verify-row-key">Live Since</span>
+        <span class="verify-row-val">December 2024</span>
       </div>
       <div class="verify-row">
-        <span>Total Payouts Received</span>
-        <span>$8,000+ (verified)</span>
+        <span class="verify-row-key">Payouts Received</span>
+        <span class="verify-row-val pos">$8,000+ (verified)</span>
       </div>
       <div class="verify-row">
-        <span>Drawdown Limit Breached</span>
-        <span>Never</span>
+        <span class="verify-row-key">Drawdown Threshold Breached</span>
+        <span class="verify-row-val pos">Never</span>
       </div>
       <div class="verify-row">
-        <span>Profile Visibility</span>
-        <span>Public — link below</span>
+        <span class="verify-row-key">Profile Accessibility</span>
+        <span class="verify-row-val">Public — link available below</span>
       </div>
-      <a href="https://profile.ftmo.com/user/BB6PRNGK8F" target="_blank" class="verify-link">
-        View FTMO Public Profile →
-      </a>
+      <a href="https://profile.ftmo.com/user/BB6PRNGK8F" target="_blank" class="verify-link">View FTMO Public Profile</a>
     </div>
 
     <div class="verify-block">
-      <h3>Supporting Evidence</h3>
-      <div class="sub">Corroborating Data Points</div>
+      <h3>Supporting Data</h3>
+      <span class="verify-sub">Available for Due Diligence</span>
       <div class="verify-row">
-        <span>Source Code (EAs)</span>
-        <span>GitHub · github.com/feliciien</span>
+        <span class="verify-row-key">Source Code (EAs)</span>
+        <span class="verify-row-val">GitHub · github.com/feliciien</span>
       </div>
       <div class="verify-row">
-        <span>Payout History</span>
-        <span>Available on request</span>
+        <span class="verify-row-key">Payout History</span>
+        <span class="verify-row-val">Available on request</span>
       </div>
       <div class="verify-row">
-        <span>Secondary Account</span>
-        <span>Atlas Funded · Active</span>
+        <span class="verify-row-key">Secondary Account</span>
+        <span class="verify-row-val pos">Atlas Funded · Active</span>
       </div>
       <div class="verify-row">
-        <span>MT5 Trade History</span>
-        <span>Available on request</span>
+        <span class="verify-row-key">MT5 Trade History</span>
+        <span class="verify-row-val">Available on request</span>
       </div>
       <div class="verify-row">
-        <span>Backtest Reports (5Y)</span>
-        <span>Gold EA · +100% / −10% DD</span>
+        <span class="verify-row-key">5-Year Backtest Reports</span>
+        <span class="verify-row-val">Gold EA · +100% / −10% DD</span>
       </div>
       <div class="verify-row">
-        <span>Independent Audit</span>
-        <span>In progress</span>
+        <span class="verify-row-key">Independent Audit</span>
+        <span class="verify-row-val">In progress</span>
       </div>
-      <a href="https://github.com/feliciien" target="_blank" class="verify-link">
-        View GitHub Repository →
-      </a>
+      <a href="https://github.com/feliciien" target="_blank" class="verify-link">View GitHub Repository</a>
     </div>
   </div>
 </section>
 
-<!-- TEAM -->
+<!-- ══════════ FOUNDER ══════════ -->
 <section id="team" class="founder-section">
-  <div class="section-label fade-up">Team</div>
-  <h2 class="section-title fade-up">The <em>architect.</em></h2>
-  <div class="divider fade-up"></div>
+  <div class="section-header fade-in">
+    <div class="section-header-left">
+      <span class="section-num">07</span>
+      <span class="section-label-text">Principal</span>
+    </div>
+    <div class="section-header-right">
+      <h2 class="section-h2">The person<br><em>behind the system.</em></h2>
+    </div>
+  </div>
 
-  <div class="founder-layout fade-up">
-    <div class="founder-text">
+  <div class="founder-layout fade-in">
+    <div class="founder-bio">
       <h3>Félicien Diouf</h3>
-      <div class="founder-title-line">Founder · Quantitative Trader · Algorithmic Developer · Dakar, Senegal</div>
-      <p>Félicien Diouf specializes in the design, backtesting, and live deployment of automated trading systems for institutional-grade prop firm environments. His framework combines intraday market structure analysis with rigorous algorithmic execution.</p>
-      <p>The emphasis is on execution quality, position sizing discipline, and drawdown control — not return maximization. A 5-month uninterrupted live track record with no drawdown limit breach and $8,000+ in verified payouts reflects this operational approach.</p>
-      <p>Strategy code is open-source and published on GitHub. FTMO performance profile is publicly accessible. The methodology is transparent by design.</p>
+      <span class="founder-title">Founder · Quantitative Trader · Algorithmic Developer · Dakar, Senegal</span>
+      <p>Félicien Diouf designs, backtests, and deploys automated trading systems for intraday institutional-grade execution. His framework integrates market structure analysis with algorithmic enforcement — removing human behavioral risk from the execution layer.</p>
+      <p>The operational emphasis is on execution quality, position sizing discipline, and drawdown management — not return maximization. A 5-month uninterrupted live track record with no drawdown threshold breach and $8,000+ in verified payouts reflects this approach.</p>
+      <p>Strategy code is open-source. The FTMO performance profile is publicly accessible. The methodology is transparent by design — intended to facilitate due diligence, not obscure it.</p>
       <div class="founder-links">
         <a href="https://profile.ftmo.com/user/BB6PRNGK8F" target="_blank" class="founder-link">FTMO Profile</a>
         <a href="https://github.com/feliciien" target="_blank" class="founder-link">GitHub</a>
         <a href="https://www.linkedin.com/in/felicien-diouf-68b998216/" target="_blank" class="founder-link">LinkedIn</a>
-        <a href="https://www.linkedin.com/company/botiq-trade/" target="_blank" class="founder-link">BotIQ LinkedIn</a>
+        <a href="https://www.linkedin.com/company/botiq-trade/" target="_blank" class="founder-link">Company LinkedIn</a>
       </div>
     </div>
 
     <div class="founder-stats">
-      <div class="founder-stat">
-        <span>Focus</span>
-        <p>Intraday systematic trading — XAUUSD (primary), BTCUSD (secondary)</p>
+      <div class="founder-stat-row">
+        <span class="founder-stat-key">Primary Focus</span>
+        <span class="founder-stat-val">Intraday systematic trading — XAUUSD (primary), BTCUSD (secondary)</span>
       </div>
-      <div class="founder-stat">
-        <span>Approach</span>
-        <p>Fully algorithmic · No discretionary override · Rule-based execution</p>
+      <div class="founder-stat-row">
+        <span class="founder-stat-key">Execution Approach</span>
+        <span class="founder-stat-val">Fully algorithmic · No discretionary override · Rule-based</span>
       </div>
-      <div class="founder-stat">
-        <span>Infrastructure</span>
-        <p>Proprietary MQL5 Expert Advisors · VPS-hosted · 24/5 uptime</p>
+      <div class="founder-stat-row">
+        <span class="founder-stat-key">Infrastructure</span>
+        <span class="founder-stat-val">Proprietary MQL5 Expert Advisors · VPS-hosted · 24/5 uptime</span>
       </div>
-      <div class="founder-stat">
-        <span>Verification</span>
-        <p>FTMO public profile · MT5 trade history · GitHub codebase · Independent audit in progress</p>
+      <div class="founder-stat-row">
+        <span class="founder-stat-key">Verification Available</span>
+        <span class="founder-stat-val">FTMO public profile · MT5 trade history · GitHub codebase · Independent audit in progress</span>
       </div>
-      <div class="founder-stat">
-        <span>Current Status</span>
-        <p>Early institutional phase · Selective partner onboarding · 5-month live track record</p>
+      <div class="founder-stat-row">
+        <span class="founder-stat-key">Current Phase</span>
+        <span class="founder-stat-val">Early institutional · Selective partner onboarding · 5-month live record</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ALLOCATION CTA -->
-<section class="alloc-section">
-  <div class="section-label">Capital Allocation</div>
-  <h2 class="section-title">Exploring<br><em>allocation?</em></h2>
-  <p>
-    We are selectively onboarding a limited number of qualified partners during this early phase.
-    All capital remains under investor control. Performance-based fee structure only.
-    No lock-up. Full transparency.
-  </p>
-  <a href="mailto:feliciien@gmail.com" class="btn-primary">Request Investor Access</a>
-
-  <div class="alloc-terms">
-    <span class="alloc-term">Capital under investor control</span>
-    <span class="alloc-term">Performance-based fees only</span>
-    <span class="alloc-term">No lock-up</span>
-    <span class="alloc-term">Real-time account access</span>
-    <span class="alloc-term">FTMO-verified</span>
+<!-- ══════════ CTA ══════════ -->
+<section class="cta-section" id="contact">
+  <div class="cta-left">
+    <span class="section-label-text">Open to Discussion</span>
+    <h2>Available to<br>qualified <em>investors.</em></h2>
+    <p>
+      BotIQ Capital is onboarding a limited number of allocation partners during this early phase. No commitment is required to initiate a conversation. All inquiries are handled directly by the founder.
+    </p>
+    <a href="mailto:feliciien@gmail.com" class="btn-primary">Initiate Inquiry</a>
+  </div>
+  <div class="cta-right">
+    <div class="cta-checklist">
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>Capital remains in investor-controlled account at all times</span>
+      </div>
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>Performance-based fees only — no management fee</span>
+      </div>
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>Full real-time account visibility and monthly reporting</span>
+      </div>
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>No lock-up — capital is fully liquid and redeemable</span>
+      </div>
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>FTMO-verified live track record publicly accessible</span>
+      </div>
+      <div class="cta-check-item">
+        <span class="cta-check-mark">—</span>
+        <span>Selective onboarding — limited current capacity</span>
+      </div>
+    </div>
+    <p class="cta-email-note">feliciien@gmail.com · All inquiries responded to directly</p>
   </div>
 </section>
 
-<!-- DISCLAIMER -->
-<div class="disclaimer-section">
-  <h4>Important Disclosures &amp; Risk Disclaimer</h4>
+<!-- ══════════ DISCLAIMER ══════════ -->
+<div class="disclaimer">
   <p>
-    This material is provided for informational purposes only and does not constitute an offer or solicitation to invest, nor does it constitute investment advice, financial advice, or any form of regulated financial communication.
-    BotIQ Capital is an early-stage systematic trading operation. It is not a registered investment advisor, fund manager, or regulated financial entity.
-    All performance figures reflect live prop firm accounts (FTMO, Atlas Funded) and are unaudited. Past performance is not indicative of future results.
-    Trading financial instruments including gold, cryptocurrencies, and foreign exchange involves substantial risk of loss, including the possible loss of principal.
-    Returns shown are gross of all fees. Actual investor returns will differ.
-    Correlation estimates are indicative and based on a limited 5-month sample period. All figures are subject to revision.
-    Prospective investors should conduct their own due diligence and consult qualified legal, tax, and financial advisors before making any allocation decision.
-    This document is intended for sophisticated and qualified investors only.
+    This material is provided for informational purposes only and does not constitute an offer, solicitation, or inducement to invest, nor does it constitute investment advice, financial advice, or any form of regulated financial communication.
+  </p>
+  <p>
+    BotIQ Capital is an early-stage systematic trading operation. It is not a registered investment advisor, fund manager, or regulated financial entity. All performance figures reflect live prop firm accounts (FTMO, Atlas Funded) and are unaudited. Past performance is not indicative of future results.
+  </p>
+  <p>
+    Trading financial instruments including gold, cryptocurrencies, and foreign exchange involves substantial risk of loss, including the possible loss of principal. Returns shown are gross of all fees. Actual investor returns will differ. Correlation estimates are indicative and based on a limited 5-month sample period. All figures are subject to revision without notice.
+  </p>
+  <p>
+    Prospective investors should conduct their own due diligence and consult qualified legal, tax, and financial advisors before making any allocation decision. This material is intended for sophisticated and qualified investors only.
   </p>
 </div>
 
-<!-- FOOTER -->
+<!-- ══════════ FOOTER ══════════ -->
 <footer>
-  <div class="footer-logo">BotIQ Capital</div>
+  <div class="footer-logo">BotIQ / Capital</div>
   <div class="footer-links">
     <a href="#track-record">Track Record</a>
     <a href="#strategy">Strategy</a>
     <a href="#risk">Risk</a>
+    <a href="#structure">Structure</a>
+    <a href="#allocation">Allocation</a>
     <a href="#verification">Verification</a>
     <a href="mailto:feliciien@gmail.com">Contact</a>
   </div>
-  <div class="footer-copy">© 2026 BotIQ Capital · Early-stage systematic trading operation</div>
+  <div class="footer-copy">© 2025 BotIQ Capital · Systematic Intraday Strategy</div>
 </footer>
 
 <script>
-  // Fade-up on scroll
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) e.target.classList.add('visible');
-    });
-  }, { threshold: 0.08 });
-  document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
-
-  // Staggered children
-  document.querySelectorAll('.track-grid, .strategy-grid, .infra-grid, .capacity-grid, .dd-grid, .corr-grid').forEach(grid => {
-    Array.from(grid.children).forEach((child, i) => {
-      child.style.transitionDelay = `${i * 0.07}s`;
-    });
+// Fade-in on scroll
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+    }
   });
+}, { threshold: 0.06 });
+document.querySelectorAll('.fade-in').forEach((el, i) => {
+  el.style.transitionDelay = `${(i % 4) * 0.06}s`;
+  obs.observe(el);
+});
+
+// Stagger grid children
+document.querySelectorAll('.track-kpi-bar, .risk-framework, .risk-metrics-bar, .structure-flow, .structure-props, .strategy-layout, .allocation-terms, .allocation-tiers').forEach(grid => {
+  Array.from(grid.children).forEach((child, i) => {
+    child.style.transitionDelay = `${i * 0.06}s`;
+  });
+});
 </script>
 </body>
 </html>
