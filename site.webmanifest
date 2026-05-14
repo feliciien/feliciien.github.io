@@ -1,0 +1,17 @@
+{
+  "name": "BoltIQ Trade",
+  "short_name": "BoltIQ",
+  "description": "Autonomous trading operating system for risk-first MT5 execution, research, AI, and owner monitoring.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05090b",
+  "theme_color": "#061117",
+  "icons": [
+    {
+      "src": "/assets/boltiq-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
