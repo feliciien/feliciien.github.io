@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://boltiqtrade.vercel.app/sitemap.xml

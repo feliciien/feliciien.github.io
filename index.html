@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoltIQ Trade — Autonomous Trading Operating System</title>
+  <meta name="description" content="BoltIQ Trade is an autonomous trading operating system for MT5 execution, prop-firm risk controls, automated research, AI-assisted decision support, and owner command monitoring.">
+  <link rel="canonical" href="https://boltiqtrade.vercel.app/">
+  <link rel="icon" href="/assets/boltiq-mark.svg" type="image/svg+xml">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#061117">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BoltIQ Trade — Autonomous Trading Operating System">
+  <meta property="og:description" content="Risk-first execution, automated research, AI-assisted decisions, and live owner monitoring for systematic trading operations.">
+  <meta property="og:image" content="https://boltiqtrade.vercel.app/assets/boltiq-command-center.png">
+  <meta property="og:url" content="https://boltiqtrade.vercel.app/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BoltIQ Trade">
+  <meta name="twitter:description" content="From trading bot to trading OS.">
+  <meta name="twitter:image" content="https://boltiqtrade.vercel.app/assets/boltiq-command-center.png">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "BoltIQ Trade",
+      "url": "https://boltiqtrade.vercel.app/",
+      "logo": "https://boltiqtrade.vercel.app/assets/boltiq-mark.svg",
+      "sameAs": ["https://github.com/feliciien"],
+      "description": "Autonomous trading infrastructure for MT5 execution, risk-first automation, research validation, AI-assisted decision support, and owner monitoring."
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05090b;
+      --bg-2: #071014;
+      --panel: #0d171c;
+      --panel-2: #101f24;
+      --ink: #f5f1e8;
+      --muted: #a9b6b7;
+      --soft: #748589;
+      --line: rgba(213, 188, 124, 0.18);
+      --line-cool: rgba(64, 213, 203, 0.20);
+      --gold: #f0cf78;
+      --gold-2: #c9963f;
+      --teal: #33d5cb;
+      --green: #2bd083;
+      --red: #ef6e6e;
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+      --radius: 8px;
+      --max: 1180px;
+      --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", "Roboto Mono", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      background:
+        radial-gradient(circle at 78% 6%, rgba(223, 176, 75, 0.22), transparent 33rem),
+        radial-gradient(circle at 18% 72%, rgba(48, 212, 202, 0.18), transparent 35rem),
+        linear-gradient(180deg, #061117 0%, #05090b 48%, #030507 100%);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.55;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.1));
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button, input, textarea { font: inherit; }
+    .wrap { width: min(var(--max), calc(100% - 40px)); margin: 0 auto; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(5, 9, 11, 0.82);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 210px;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(240,207,120,0.55);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, rgba(18,32,37,0.94), rgba(7,13,16,0.94));
+    }
+
+    .bolt {
+      width: 19px;
+      height: 28px;
+      background: linear-gradient(150deg, var(--gold), var(--teal));
+      clip-path: polygon(56% 0, 0 56%, 42% 56%, 22% 100%, 100% 36%, 57% 36%);
+    }
+
+    .brand strong { display: block; font-size: 15px; letter-spacing: 0.16em; }
+    .brand span { display: block; color: var(--soft); font-size: 12px; margin-top: 1px; }
+
+    .navlinks {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 26px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .navlinks a { transition: color .18s ease; }
+    .navlinks a:hover { color: var(--ink); }
+
+    .nav-cta {
+      border: 1px solid rgba(240,207,120,0.6);
+      color: var(--gold);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      background: rgba(240,207,120,0.07);
+      white-space: nowrap;
+    }
+
+    .hero {
+      padding: 112px 0 88px;
+      display: grid;
+      align-items: center;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+      align-items: center;
+      gap: 56px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 34px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      max-width: 760px;
+      font-size: clamp(52px, 7.4vw, 108px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      font-weight: 820;
+    }
+
+    .hero-lede {
+      max-width: 680px;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: clamp(19px, 2.1vw, 25px);
+      line-height: 1.42;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .btn {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--ink);
+      background: rgba(255,255,255,0.06);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      font-weight: 650;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: rgba(240,207,120,0.55); }
+    .btn.primary { background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #12100a; border: 0; }
+
+    .hero-proof {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 42px;
+      max-width: 690px;
+    }
+
+    .proof-tile {
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px;
+      padding: 17px 16px;
+      background: rgba(12, 23, 28, 0.76);
+    }
+
+    .proof-tile strong { display: block; color: var(--gold); font-size: 26px; line-height: 1; }
+    .proof-tile span { display: block; margin-top: 8px; color: var(--soft); font-size: 13px; }
+
+    .visual {
+      position: relative;
+      min-height: 620px;
+    }
+
+    .device {
+      position: relative;
+      border: 1px solid rgba(64,213,203,0.25);
+      border-radius: 8px;
+      background: rgba(4, 10, 12, 0.88);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transform: rotate(1deg);
+    }
+
+    .device img { width: 100%; height: auto; opacity: 0.96; }
+
+    .status-card {
+      position: absolute;
+      left: -28px;
+      bottom: 46px;
+      width: min(350px, 72%);
+      border: 1px solid rgba(240,207,120,0.32);
+      border-radius: 8px;
+      background: rgba(8, 18, 22, 0.94);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .status-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--soft);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px rgba(43,208,131,0.7); }
+    .status-card strong { display: block; margin-top: 16px; font-size: 32px; color: var(--ink); line-height: 1.08; }
+    .status-card p { margin-top: 10px; color: var(--muted); font-size: 14px; }
+
+    section { padding: 88px 0; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 34px;
+      margin-bottom: 34px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(34px, 4.4vw, 62px);
+      line-height: 1.02;
+      max-width: 760px;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      max-width: 420px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .band {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      min-height: 228px;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(15, 29, 35, 0.88), rgba(7, 14, 17, 0.9));
+      padding: 26px;
+    }
+
+    .card .num {
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .card h3 { margin-top: 18px; font-size: 24px; line-height: 1.1; }
+    .card p { margin-top: 14px; color: var(--muted); font-size: 15px; }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 0.78fr 1.22fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .arch-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      background: rgba(8,16,20,0.78);
+    }
+
+    .arch-panel h3 { font-size: 30px; line-height: 1.08; }
+    .arch-panel p { color: var(--muted); margin-top: 14px; }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px;
+      padding: 15px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .flow-row strong { color: var(--gold); font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; }
+    .flow-row span { color: var(--muted); }
+
+    .ops {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px;
+      padding: 22px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .metric strong { display: block; color: var(--gold); font-size: 34px; line-height: 1; }
+    .metric span { display: block; margin-top: 10px; color: var(--soft); font-size: 13px; }
+
+    .proof {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .proof-img {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0b1114;
+    }
+
+    .proof-copy {
+      padding-left: 24px;
+    }
+
+    .proof-copy h2 {
+      font-size: clamp(34px, 4vw, 58px);
+      line-height: 1.02;
+      margin-bottom: 18px;
+    }
+
+    .proof-copy p {
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 18px;
+    }
+
+    .checks {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .check {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .check::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--teal);
+      flex: 0 0 auto;
+    }
+
+    .cta {
+      padding: 92px 0 62px;
+    }
+
+    .cta-box {
+      border: 1px solid rgba(240,207,120,0.34);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(240,207,120,0.10), rgba(51,213,203,0.05)),
+        rgba(8,16,20,0.82);
+      padding: clamp(30px, 6vw, 70px);
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .cta-box h2 { font-size: clamp(36px, 5vw, 70px); line-height: 1; }
+    .cta-box p { color: var(--muted); margin-top: 18px; max-width: 620px; font-size: 18px; }
+    .contact-list { display: grid; gap: 12px; }
+    .contact-list a {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 16px 18px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+    }
+
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 28px 0;
+      color: var(--soft);
+      font-size: 13px;
+    }
+
+    .footer-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .disclaimer {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 22px 20px 42px;
+      color: #758487;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 940px) {
+      .nav { height: auto; padding: 14px 0; align-items: flex-start; }
+      .navlinks { display: none; }
+      .hero { padding-top: 54px; }
+      .hero-grid,
+      .architecture,
+      .proof,
+      .cta-box {
+        grid-template-columns: 1fr;
+      }
+      .visual { min-height: auto; }
+      .device { transform: none; }
+      .status-card { left: 18px; right: 18px; bottom: 18px; width: auto; }
+      .grid { grid-template-columns: 1fr; }
+      .ops { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-head { display: block; }
+      .section-head p { margin-top: 16px; }
+      .proof-copy { padding-left: 0; }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 28px, var(--max)); }
+      .brand { min-width: 0; }
+      .brand > span:not(.mark) > span { display: none; }
+      .brand strong { font-size: 13px; }
+      .nav-cta { display: none; }
+      h1 { font-size: clamp(48px, 13vw, 58px); line-height: 0.98; }
+      .section-head h2, .proof-copy h2, .cta-box h2 { font-size: 32px; line-height: 1.08; }
+      .hero { padding: 38px 0 64px; }
+      .hero-lede { font-size: 17px; max-width: 32ch; }
+      .hero-actions, .hero-proof { max-width: 340px; }
+      .hero-proof, .ops { grid-template-columns: 1fr; }
+      .flow-row { grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; }
+      .card { min-height: 0; }
+      section { padding: 64px 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="wrap nav" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="BoltIQ Trade home">
+        <span class="mark" aria-hidden="true"><span class="bolt"></span></span>
+        <span>
+          <strong>BOLTIQ TRADE</strong>
+          <span>Autonomous trading infrastructure</span>
+        </span>
+      </a>
+      <div class="navlinks">
+        <a href="#system">System</a>
+        <a href="#risk">Risk</a>
+        <a href="#research">Research</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <a class="nav-cta" href="mailto:feliciien@gmail.com">Founder contact</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Official BoltIQ Trade website</div>
+          <h1>BoltIQ Trade.</h1>
+          <p class="hero-lede">
+            An autonomous trading operating system for MT5 execution, prop-firm risk controls,
+            automated strategy research, AI-assisted decisions, and owner-level monitoring.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#system">Explore the system</a>
+            <a class="btn" href="#contact">Contact the founder</a>
+          </div>
+          <div class="hero-proof" aria-label="BoltIQ operating facts">
+            <div class="proof-tile"><strong>MT5</strong><span>live execution stack</span></div>
+            <div class="proof-tile"><strong>AI</strong><span>CEO copilot layer</span></div>
+            <div class="proof-tile"><strong>24/5</strong><span>monitoring mindset</span></div>
+          </div>
+        </div>
+
+        <div class="visual" aria-label="BoltIQ command center visual">
+          <div class="device">
+            <img src="assets/boltiq-command-center.png" alt="BoltIQ command center interface showing live MT5, risk guard, research, AI committee, iPhone, Apple Watch, and CEO dashboard modules.">
+          </div>
+          <div class="status-card">
+            <div class="status-head"><span>Production posture</span><span class="dot" aria-hidden="true"></span></div>
+            <strong>Risk-first automation</strong>
+            <p>Designed to validate edge, supervise live systems, and avoid scaling until evidence supports it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="system" class="band">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>One command center for the trading operation.</h2>
+          <p>Execution, research, risk, mobile monitoring, and owner decisions are connected into a single operating layer.</p>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <span class="num">01 / Execution</span>
+            <h3>MT5 supervision</h3>
+            <p>Tracks terminal health, account connectivity, trade permissions, live exports, EA decisions, spread, ATR, sessions, and blockers.</p>
+          </article>
+          <article class="card">
+            <span class="num">02 / Risk</span>
+            <h3>Prop-firm guardrails</h3>
+            <p>Daily drawdown, total exposure, risk per trade, portfolio caps, emergency mode, safe mode, and audit trails stay visible.</p>
+          </article>
+          <article class="card">
+            <span class="num">03 / Intelligence</span>
+            <h3>AI investment committee</h3>
+            <p>Transforms telemetry into CIO, CRO, quant research, execution, operations, and compliance calls for the owner.</p>
+          </article>
+          <article class="card">
+            <span class="num">04 / Research</span>
+            <h3>Automated validation</h3>
+            <p>Runs backtests, optimizer cycles, sensitivity matrices, progressive validation, and gate-based candidate promotion.</p>
+          </article>
+          <article class="card">
+            <span class="num">05 / Mobile</span>
+            <h3>Owner app and Watch</h3>
+            <p>Live dashboard access from iPhone and Apple Watch with cellular fallback, command controls, and low-noise alerts.</p>
+          </article>
+          <article class="card">
+            <span class="num">06 / Governance</span>
+            <h3>Every action recorded</h3>
+            <p>Commands, recommendations, deployments, backups, validation results, and risk posture are kept auditable.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="risk">
+      <div class="wrap architecture">
+        <div class="arch-panel">
+          <div class="eyebrow">Architecture</div>
+          <h3>Built like an operating system, not a single script.</h3>
+          <p>
+            BoltIQ connects the EA layer, account telemetry, risk governor, research engine,
+            AI copilot, dashboard, mobile bridge, and notification layer.
+          </p>
+          <div class="checks">
+            <div class="check">Owner confirmation for dangerous actions</div>
+            <div class="check">Low-noise alerts for only actionable events</div>
+            <div class="check">Research-first deployment gates</div>
+          </div>
+        </div>
+        <div class="flow" aria-label="BoltIQ architecture flow">
+          <div class="flow-row"><strong>MT5 EAs</strong><span>Strategy execution, trade blocking logic, spread/session/news filters, live telemetry.</span></div>
+          <div class="flow-row"><strong>Core API</strong><span>Account snapshots, command catalog, secure token layer, mobile bridge, dashboard API.</span></div>
+          <div class="flow-row"><strong>Risk Engine</strong><span>Prop-firm caps, drawdown guardrails, emergency controls, risk posture verification.</span></div>
+          <div class="flow-row"><strong>Research Lab</strong><span>Backtests, optimizer runs, custom tick validation, walk-forward gates, candidate scoring.</span></div>
+          <div class="flow-row"><strong>AI Copilot</strong><span>CEO briefings, anomaly analysis, smart actions, quant research interpretation.</span></div>
+          <div class="flow-row"><strong>Owner UX</strong><span>Web dashboard, iPhone app, Apple Watch app, Telegram executive briefs.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="research" class="band">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Research-first growth, capital-first execution.</h2>
+          <p>The system is designed to improve through evidence, not blind risk increases or forced trading.</p>
+        </div>
+        <div class="ops">
+          <div class="metric"><strong>62m</strong><span>custom tick horizon supported</span></div>
+          <div class="metric"><strong>5Y</strong><span>robustness gate objective</span></div>
+          <div class="metric"><strong>0.5%</strong><span>risk-per-trade policy cap</span></div>
+          <div class="metric"><strong>AI</strong><span>operator and committee layer</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap proof">
+        <div class="proof-img">
+          <img src="assets/boltiq-command-center.png" alt="BoltIQ command center public visual.">
+        </div>
+        <div class="proof-copy">
+          <div class="eyebrow">Owner command layer</div>
+          <h2>Designed for visibility before autonomy.</h2>
+          <p>
+            The goal is not to hide trading inside a black box. The owner should see what is running,
+            why trading is blocked, what research is testing, and what actions are safe to take.
+          </p>
+          <div class="checks">
+            <div class="check">Live account health and trade permissions</div>
+            <div class="check">Optimizer and backtest state</div>
+            <div class="check">AI-generated risk and strategy context</div>
+            <div class="check">Audit trail for commands and deployment decisions</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="wrap cta-box">
+        <div>
+          <div class="eyebrow">Founder-led build</div>
+          <h2>Build the future of autonomous trading infrastructure.</h2>
+          <p>
+            BoltIQ Trade is currently founder-operated and product-led. For collaborations,
+            technical discussions, media, or strategic opportunities, contact the founder directly.
+          </p>
+        </div>
+        <div class="contact-list">
+          <a href="mailto:feliciien@gmail.com"><span>Email</span><strong>feliciien@gmail.com</strong></a>
+          <a href="https://github.com/feliciien" rel="noopener"><span>GitHub</span><strong>@feliciien</strong></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid">
+      <span>© 2026 BoltIQ Trade</span>
+      <span>Autonomous trading infrastructure · Risk-first systems · AI-assisted research</span>
+    </div>
+  </footer>
+
+  <div class="disclaimer">
+    BoltIQ Trade is a technology and research project. Nothing on this website is financial advice,
+    investment advice, a solicitation, or a promise of performance. Trading foreign exchange,
+    commodities, indices, cryptocurrencies, and derivatives involves substantial risk. Past or simulated
+    performance does not guarantee future results. Any automation should be evaluated under strict
+    risk controls and applicable rules before live deployment.
+  </div>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+</html>
